@@ -96,22 +96,28 @@ const StreamSession = ({
       setStatus("");
 
       // Optimistically add the human message
-      const newMessages = params.messages || [];
-      setMessages(newMessages);
+      const addedMessages = params?.messages || [];
+      setMessages((prev) => [...prev, ...addedMessages]);
 
       try {
-        const lastMessage = newMessages[newMessages.length - 1];
-        const prompt = typeof lastMessage.content === "string"
-          ? lastMessage.content
-          : Array.isArray(lastMessage.content)
-            ? (lastMessage.content.find((c: any) => c.type === "text") as any)?.text || ""
-            : "";
+        const currentMessages = [...messages, ...addedMessages];
+        
+        // Map messages to the format expected by the API
+        const apiMessages = currentMessages.map((m) => {
+          const role = m.type === "human" ? "user" : m.type === "ai" ? "assistant" : m.type;
+          const content = typeof m.content === "string"
+            ? m.content
+            : Array.isArray(m.content)
+              ? (m.content.find((c: any) => c.type === "text") as any)?.text || ""
+              : "";
+          return { role, content };
+        }).filter(m => m.content !== "" || m.role === "assistant"); // Keep assistant messages even if empty (streaming)
 
         const normalizedApiUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
         const response = await fetch(`${normalizedApiUrl}/supervisor`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: prompt }),
+          body: JSON.stringify({ messages: apiMessages }),
         });
 
         if (!response.ok || !response.body) {
