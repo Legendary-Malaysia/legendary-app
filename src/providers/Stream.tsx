@@ -80,17 +80,20 @@ const StreamSession = ({
 }) => {
   const [threadId, setThreadId] = useQueryState("threadId");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [status, setStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<any>(null);
 
   // Mock stream value for custom FastAPI endpoint
   const streamValue: StreamContextType = {
     messages,
+    status,
     isLoading,
     error,
     submit: async (params: any) => {
       setIsLoading(true);
       setError(null);
+      setStatus("");
 
       // Optimistically add the human message
       const newMessages = params.messages || [];
@@ -128,6 +131,9 @@ const StreamSession = ({
         ]);
 
         let accumulated = "";
+        let teamContent = "";
+        let hasStartedTeam = false;
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -141,7 +147,24 @@ const StreamSession = ({
               try {
                 const jsonStr = line.trim().slice(6);
                 const data = JSON.parse(jsonStr);
-                if (data.content) {
+                
+                if (data.node === "custom") {
+                  // Intermediate status updates
+                  setStatus(data.content || "");
+                } else if (data.node === "customer_service_team") {
+                  // Final response content
+                  if (!hasStartedTeam) {
+                    hasStartedTeam = true;
+                    setStatus(""); // Clear status when response begins
+                  }
+                  teamContent += data.content || "";
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === aiMessageId ? { ...m, content: teamContent } : m,
+                    ),
+                  );
+                } else if (!data.node && data.content) {
+                  // Fallback for old/unexpected format
                   fullContent += data.content;
                   setMessages((prev) =>
                     prev.map((m) =>
