@@ -43,14 +43,18 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
     if (!apiUrl || !assistantId) return [];
     const client = createClient(apiUrl, getApiKey() ?? undefined);
 
-    const threads = await client.threads.search({
-      metadata: {
-        ...getThreadSearchMetadata(assistantId),
-      },
-      limit: 100,
-    });
-
-    return threads;
+    try {
+      const threads = await client.threads.search({
+        metadata: {
+          ...getThreadSearchMetadata(assistantId),
+        },
+        limit: 100,
+      });
+      return threads;
+    } catch (e) {
+      console.warn("Failed to fetch threads (likely unsupported by custom backend):", e);
+      return [];
+    }
   }, [apiUrl, assistantId]);
 
   const value = {

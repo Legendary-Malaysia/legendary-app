@@ -14,6 +14,7 @@ import {
   type UIMessage,
   type RemoveUIMessage,
 } from "@langchain/langgraph-sdk/react-ui";
+import { v4 as uuidv4 } from "uuid";
 import { useQueryState } from "nuqs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -68,9 +69,9 @@ async function checkGraphStatus(
 
 const StreamSession = ({
   children,
-  apiKey,
+  apiKey: _apiKey,
   apiUrl,
-  assistantId,
+  assistantId: _assistantId,
 }: {
   children: ReactNode;
   apiKey: string | null;
@@ -78,46 +79,124 @@ const StreamSession = ({
   assistantId: string;
 }) => {
   const [threadId, setThreadId] = useQueryState("threadId");
-  const { getThreads, setThreads } = useThreads();
-  const streamValue = useTypedStream({
-    apiUrl,
-    apiKey: apiKey ?? undefined,
-    assistantId,
-    threadId: threadId ?? null,
-    fetchStateHistory: true,
-    onCustomEvent: (event, options) => {
-      if (isUIMessage(event) || isRemoveUIMessage(event)) {
-        options.mutate((prev) => {
-          const ui = uiMessageReducer(prev.ui ?? [], event);
-          return { ...prev, ui };
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  // Mock stream value for custom FastAPI endpoint
+  const streamValue: StreamContextType = {
+    messages,
+    isLoading,
+    error,
+    submit: async (params: any) => {
+      setIsLoading(true);
+      setError(null);
+
+      // Optimistically add the human message
+      const newMessages = params.messages || [];
+      setMessages(newMessages);
+
+      try {
+        const lastMessage = newMessages[newMessages.length - 1];
+        const prompt = typeof lastMessage.content === "string"
+          ? lastMessage.content
+          : Array.isArray(lastMessage.content)
+            ? (lastMessage.content.find((c: any) => c.type === "text") as any)?.text || ""
+            : "";
+
+        const normalizedApiUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
+        const response = await fetch(`${normalizedApiUrl}/supervisor`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: prompt }),
         });
+
+        if (!response.ok || !response.body) {
+          const errText = await response.text();
+          throw new Error(errText || "Failed to fetch from supervisor");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        const aiMessageId = uuidv4();
+        let fullContent = "";
+
+        // Add an initial empty AI message
+        setMessages((prev) => [
+          ...prev,
+          { id: aiMessageId, type: "ai", content: "" },
+        ]);
+
+        let accumulated = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          accumulated += decoder.decode(value, { stream: true });
+          const lines = accumulated.split("\n\n");
+          accumulated = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.trim().startsWith("data: ")) {
+              try {
+                const jsonStr = line.trim().slice(6);
+                const data = JSON.parse(jsonStr);
+                if (data.content) {
+                  fullContent += data.content;
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === aiMessageId ? { ...m, content: fullContent } : m,
+                    ),
+                  );
+                }
+              } catch (e) {
+                console.error("Error parsing SSE data:", e, line);
+              }
+            }
+          }
+        }
+      } catch (err: any) {
+        setError(err);
+        toast.error("Backend Error", {
+          description: err.message,
+        });
+      } finally {
+        setIsLoading(false);
       }
     },
-    onThreadId: (id) => {
-      setThreadId(id);
-      // Refetch threads list when thread ID changes.
-      // Wait for some seconds before fetching so we're able to get the new thread that was created.
-      sleep().then(() => getThreads().then(setThreads).catch(console.error));
-    },
-  });
+    stop: async () => {},
+    getMessagesMetadata: (message: Message) => ({
+      id: message.id || "",
+      firstSeenState: {
+        checkpoint: null,
+      },
+    }),
+    setBranch: async () => {},
+    interrupt: null,
+    values: {},
+    branches: {},
+    checkpoint: null,
+    next: [],
+    config: {},
+    metadata: {},
+  } as any;
 
   useEffect(() => {
-    checkGraphStatus(apiUrl, apiKey).then((ok) => {
-      if (!ok) {
-        toast.error("Failed to connect to LangGraph server", {
-          description: () => (
-            <p>
-              Please ensure your graph is running at <code>{apiUrl}</code> and
-              your API key is correctly set (if connecting to a deployed graph).
-            </p>
-          ),
-          duration: 10000,
-          richColors: true,
-          closeButton: true,
+    // Basic connectivity check
+    fetch(apiUrl)
+      .then((res) => {
+        if (!res.ok && res.status !== 404) {
+          toast.warning("Backend might be unreachable", {
+            description: `Could not connect to ${apiUrl}`,
+          });
+        }
+      })
+      .catch(() => {
+        toast.error("Connection Failed", {
+          description: `FastAPI server not found at ${apiUrl}`,
         });
-      }
-    });
-  }, [apiKey, apiUrl]);
+      });
+  }, [apiUrl]);
 
   return (
     <StreamContext.Provider value={streamValue}>
@@ -127,7 +206,7 @@ const StreamSession = ({
 };
 
 // Default values for the form
-const DEFAULT_API_URL = "http://localhost:2024";
+const DEFAULT_API_URL = "http://127.0.0.1:8000";
 const DEFAULT_ASSISTANT_ID = "agent";
 
 export const StreamProvider: React.FC<{ children: ReactNode }> = ({
