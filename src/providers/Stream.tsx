@@ -8,9 +8,6 @@ import React, {
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { type Message } from "@langchain/langgraph-sdk";
 import {
-  uiMessageReducer,
-  isUIMessage,
-  isRemoveUIMessage,
   type UIMessage,
   type RemoveUIMessage,
 } from "@langchain/langgraph-sdk/react-ui";
@@ -23,7 +20,6 @@ import { Label } from "@/components/ui/label";
 import { ArrowRight } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
 import { getApiKey } from "@/lib/api-key";
-import { useThreads } from "./Thread";
 import { toast } from "sonner";
 
 export type StateType = { messages: Message[]; ui?: UIMessage[] };
@@ -78,7 +74,6 @@ const StreamSession = ({
   apiUrl: string;
   assistantId: string;
 }) => {
-  const [threadId, setThreadId] = useQueryState("threadId");
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -114,7 +109,7 @@ const StreamSession = ({
         }).filter(m => m.content !== "" || m.role === "assistant"); // Keep assistant messages even if empty (streaming)
 
         const normalizedApiUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
-        const response = await fetch(`${normalizedApiUrl}/supervisor`, {
+        const response = await fetch(`${normalizedApiUrl}/${_assistantId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: apiMessages }),

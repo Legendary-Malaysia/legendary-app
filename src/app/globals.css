@@ -149,3 +149,7 @@
     box-shadow: inset 9px 0 6px -1px rgb(0 0 0 / 0.02);
   }
 }
+
+button:hover {
+  cursor: pointer;
+}

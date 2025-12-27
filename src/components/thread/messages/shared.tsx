@@ -194,7 +194,7 @@ export function CommandBar({
         content={content}
         disabled={isLoading}
       />
-      {isAiMessage && !!handleRegenerate && (
+      {/* {isAiMessage && !!handleRegenerate && (
         <TooltipIconButton
           disabled={isLoading}
           tooltip="Refresh"
@@ -215,7 +215,7 @@ export function CommandBar({
         >
           <Pencil />
         </TooltipIconButton>
-      )}
+      )} */}
     </div>
   );
 }

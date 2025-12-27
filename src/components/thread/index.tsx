@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
-import ThreadHistory from "./history";
+// import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Label } from "../ui/label";
@@ -278,7 +278,7 @@ export function Thread() {
             className="relative h-full"
             style={{ width: 300 }}
           >
-            <ThreadHistory />
+            {/* <ThreadHistory /> */}
           </div>
         </motion.div>
       </div>
@@ -309,7 +309,7 @@ export function Thread() {
               : { duration: 0 }
           }
         >
-          {!chatStarted && (
+          {/* {!chatStarted && (
             <div className="absolute top-0 left-0 z-10 flex w-full items-center justify-between gap-3 p-2 pl-4">
               <div>
                 {(!chatHistoryOpen || !isLargeScreen) && (
@@ -330,11 +330,11 @@ export function Thread() {
                 <OpenGitHubRepo />
               </div>
             </div>
-          )}
+          )} */}
           {chatStarted && (
             <div className="relative z-10 flex items-center justify-between gap-3 p-2">
               <div className="relative flex items-center justify-start gap-2">
-                <div className="absolute left-0 z-10">
+                {/* <div className="absolute left-0 z-10">
                   {(!chatHistoryOpen || !isLargeScreen) && (
                     <Button
                       className="hover:bg-gray-100"
@@ -348,10 +348,10 @@ export function Thread() {
                       )}
                     </Button>
                   )}
-                </div>
+                </div> */}
                 <motion.button
                   className="flex cursor-pointer items-center gap-2"
-                  onClick={() => setThreadId(null)}
+                  onClick={() => window.location.reload()}
                   animate={{
                     marginLeft: !chatHistoryOpen ? 48 : 0,
                   }}
@@ -372,15 +372,15 @@ export function Thread() {
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                   <OpenGitHubRepo />
-                </div>
+                </div> */}
                 <TooltipIconButton
                   size="lg"
                   className="p-4"
                   tooltip="New thread"
                   variant="ghost"
-                  onClick={() => setThreadId(null)}
+                  onClick={() => window.location.reload()}
                 >
                   <SquarePen className="size-5" />
                 </TooltipIconButton>
@@ -486,7 +486,7 @@ export function Thread() {
                       />
 
                       <div className="flex items-center gap-6 p-2 pt-4">
-                        <div>
+                        {/* <div>
                           <div className="flex items-center space-x-2">
                             <Switch
                               id="render-tool-calls"
@@ -500,8 +500,8 @@ export function Thread() {
                               Hide Tool Calls
                             </Label>
                           </div>
-                        </div>
-                        <Label
+                        </div> */}
+                        {/* <Label
                           htmlFor="file-input"
                           className="flex cursor-pointer items-center gap-2"
                         >
@@ -517,7 +517,7 @@ export function Thread() {
                           multiple
                           accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
                           className="hidden"
-                        />
+                        /> */}
                         {stream.isLoading ? (
                           <Button
                             key="stop"
