@@ -50,9 +50,31 @@ const StreamSession = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Mock stream value for custom FastAPI endpoint
+  /**
+   * Custom adapter for the FastAPI SSE endpoint.
+   *
+   * This object implements the `StreamContextType` interface (from `useTypedStream`)
+   * using our own state management and fetch logic to communicate with a custom
+   * FastAPI backend. The backend is fully functional for our requirements but
+   * does not implement the full LangChain SDK protocol.
+   *
+   * **Implemented properties:**
+   * - `messages`, `status`, `isLoading`, `error`: Real state values.
+   * - `submit`: Sends messages to the FastAPI endpoint and handles SSE streaming.
+   * - `getMessagesMetadata`: Returns minimal metadata structure.
+   *
+   * **Unused SDK features (no-op or placeholder values):**
+   * - `stop`: Not needed (backend handles stream lifecycle).
+   * - `setBranch`: Branching not used by our backend.
+   * - `interrupt`, `values`, `branches`, `checkpoint`, `next`, `config`, `metadata`:
+   *   Required by the interface but not applicable to our backend architecture.
+   *
+   * The `as any` assertion bypasses TypeScript checking because we intentionally
+   * omit SDK-specific properties that our FastAPI backend doesn't use. If the
+   * SDK's `StreamContextType` changes, review this adapter for compatibility.
+   */
   const streamValue: StreamContextType = {
     messages,
     status,
