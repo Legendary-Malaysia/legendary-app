@@ -9,11 +9,11 @@ export default function DemoPage(): React.ReactNode {
   return (
     <>
       <Toaster />
-        <StreamProvider>
-          <ArtifactProvider>
-            <Thread />
-          </ArtifactProvider>
-        </StreamProvider>
+      <StreamProvider>
+        <ArtifactProvider>
+          <Thread />
+        </ArtifactProvider>
+      </StreamProvider>
     </>
   );
 }

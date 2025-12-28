@@ -1,8 +1,6 @@
 import {
   XIcon,
   SendHorizontal,
-  RefreshCcw,
-  Pencil,
   Copy,
   CopyCheck,
   ChevronLeft,
@@ -157,11 +155,11 @@ export function CommandBar({
     );
   }
 
-  const showEdit =
-    isHumanMessage &&
-    isEditing !== undefined &&
-    !!setIsEditing &&
-    !!handleSubmitEdit;
+  // const showEdit =
+  //   isHumanMessage &&
+  //   isEditing !== undefined &&
+  //   !!setIsEditing &&
+  //   !!handleSubmitEdit;
 
   if (isHumanMessage && isEditing && !!setIsEditing && !!handleSubmitEdit) {
     return (

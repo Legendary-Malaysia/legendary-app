@@ -15,7 +15,6 @@ import { v4 as uuidv4 } from "uuid";
 import { useQueryState } from "nuqs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { LangGraphLogoSVG } from "@/components/icons/langgraph";
 import { Label } from "@/components/ui/label";
 import { ArrowRight } from "lucide-react";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -38,30 +37,6 @@ const useTypedStream = useStream<
 
 type StreamContextType = ReturnType<typeof useTypedStream>;
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
-
-async function sleep(ms = 4000) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function checkGraphStatus(
-  apiUrl: string,
-  apiKey: string | null,
-): Promise<boolean> {
-  try {
-    const res = await fetch(`${apiUrl}/info`, {
-      ...(apiKey && {
-        headers: {
-          "X-Api-Key": apiKey,
-        },
-      }),
-    });
-
-    return res.ok;
-  } catch (e) {
-    console.error(e);
-    return false;
-  }
-}
 
 const StreamSession = ({
   children,
@@ -96,19 +71,30 @@ const StreamSession = ({
 
       try {
         const currentMessages = [...messages, ...addedMessages];
-        
-        // Map messages to the format expected by the API
-        const apiMessages = currentMessages.map((m) => {
-          const role = m.type === "human" ? "user" : m.type === "ai" ? "assistant" : m.type;
-          const content = typeof m.content === "string"
-            ? m.content
-            : Array.isArray(m.content)
-              ? (m.content.find((c: any) => c.type === "text") as any)?.text || ""
-              : "";
-          return { role, content };
-        }).filter(m => m.content !== "" || m.role === "assistant"); // Keep assistant messages even if empty (streaming)
 
-        const normalizedApiUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
+        // Map messages to the format expected by the API
+        const apiMessages = currentMessages
+          .map((m) => {
+            const role =
+              m.type === "human"
+                ? "user"
+                : m.type === "ai"
+                  ? "assistant"
+                  : m.type;
+            const content =
+              typeof m.content === "string"
+                ? m.content
+                : Array.isArray(m.content)
+                  ? (m.content.find((c: any) => c.type === "text") as any)
+                      ?.text || ""
+                  : "";
+            return { role, content };
+          })
+          .filter((m) => m.content !== "" || m.role === "assistant"); // Keep assistant messages even if empty (streaming)
+
+        const normalizedApiUrl = apiUrl.endsWith("/")
+          ? apiUrl.slice(0, -1)
+          : apiUrl;
         const response = await fetch(`${normalizedApiUrl}/${_assistantId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -150,7 +136,7 @@ const StreamSession = ({
                 try {
                   const jsonStr = line.trim().slice(6);
                   const data = JSON.parse(jsonStr);
-                  
+
                   if (data.node === "custom") {
                     // Intermediate status updates
                     setStatus(data.content || "");
@@ -163,18 +149,22 @@ const StreamSession = ({
                     teamContent += data.content || "";
                     setMessages((prev) =>
                       prev.map((m) =>
-                        m.id === aiMessageId ? { ...m, content: teamContent } : m,
+                        m.id === aiMessageId
+                          ? { ...m, content: teamContent }
+                          : m,
                       ),
                     );
                   } else if (data.error) {
-                      // Handle error event data
-                      throw new Error(data.error);
+                    // Handle error event data
+                    throw new Error(data.error);
                   } else if (!data.node && data.content) {
                     // Fallback for old/unexpected format
                     fullContent += data.content;
                     setMessages((prev) =>
                       prev.map((m) =>
-                        m.id === aiMessageId ? { ...m, content: fullContent } : m,
+                        m.id === aiMessageId
+                          ? { ...m, content: fullContent }
+                          : m,
                       ),
                     );
                   }
@@ -277,7 +267,6 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
         <div className="animate-in fade-in-0 zoom-in-95 bg-background flex max-w-3xl flex-col rounded-lg border shadow-lg">
           <div className="mt-14 flex flex-col gap-2 border-b p-6">
             <div className="flex flex-col items-start gap-2">
-              <LangGraphLogoSVG className="h-7" />
               <h1 className="text-xl font-semibold tracking-tight">
                 Agent Chat
               </h1>

@@ -14,30 +14,11 @@ import {
   ensureToolCallsHaveResponses,
 } from "@/lib/ensure-tool-responses";
 import { TooltipIconButton } from "./tooltip-icon-button";
-import {
-  ArrowDown,
-  LoaderCircle,
-  PanelRightOpen,
-  PanelRightClose,
-  SquarePen,
-  XIcon,
-  Plus,
-  Send,
-} from "lucide-react";
+import { ArrowDown, LoaderCircle, SquarePen, XIcon, Send } from "lucide-react";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
-// import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { Label } from "../ui/label";
-import { Switch } from "../ui/switch";
-import { GitHubSVG } from "../icons/github";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { ContentBlocksPreview } from "./ContentBlocksPreview";
 import {
@@ -89,30 +70,6 @@ function ScrollToBottom(props: { className?: string }) {
   );
 }
 
-function OpenGitHubRepo() {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <a
-            href="https://github.com/langchain-ai/agent-chat-ui"
-            target="_blank"
-            className="flex items-center justify-center"
-          >
-            <GitHubSVG
-              width="24"
-              height="24"
-            />
-          </a>
-        </TooltipTrigger>
-        <TooltipContent side="left">
-          <p>Open GitHub repo</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
 export function Thread() {
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
@@ -122,15 +79,14 @@ export function Thread() {
     "chatHistoryOpen",
     parseAsBoolean.withDefault(false),
   );
-  const [hideToolCalls, setHideToolCalls] = useQueryState(
-    "hideToolCalls",
-    parseAsBoolean.withDefault(false),
-  );
+  // const [hideToolCalls, setHideToolCalls] = useQueryState(
+  //   "hideToolCalls",
+  //   parseAsBoolean.withDefault(false),
+  // );
   const [input, setInput] = useState("");
   const {
     contentBlocks,
     setContentBlocks,
-    handleFileUpload,
     dropRef,
     removeBlock,
     resetBlocks: _resetBlocks,
@@ -145,14 +101,6 @@ export function Thread() {
   const isLoading = stream.isLoading;
 
   const lastError = useRef<string | undefined>(undefined);
-
-  const setThreadId = (id: string | null) => {
-    _setThreadId(id);
-
-    // close artifact and reset artifact context
-    closeArtifact();
-    setArtifactContext({});
-  };
 
   useEffect(() => {
     if (!stream.error) {
@@ -437,7 +385,7 @@ export function Thread() {
                     </div>
                   )}
 
-                  <ScrollToBottom className="animate-in fade-in-0 zoom-in-95 absolute bottom-full left-1/2 mb-4 -translate-x-1/2" />
+                  <ScrollToBottom className="bg-muted animate-in fade-in-0 zoom-in-95 absolute bottom-full left-1/2 mb-4 -translate-x-1/2" />
 
                   <div
                     ref={dropRef}
@@ -558,27 +506,38 @@ export function Thread() {
   );
 }
 
-
 function FooterNote({ chatStarted }: { chatStarted: boolean }) {
   return (
     <div className="flex flex-col items-center pb-4">
       {!chatStarted && (
         <div className="flex items-center gap-3 px-4 py-2">
-          <p className="text-xs text-gray-500 text-center w-full">
+          <p className="w-full text-center text-xs text-gray-500">
             <span className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-              <a href="/disclaimer" className="hover:underline whitespace-nowrap">
+              <a
+                href="/disclaimer"
+                className="whitespace-nowrap hover:underline"
+              >
                 Disclaimer
               </a>
-              <span className="hidden sm:inline text-gray-300">•</span>
-              <a href="https://legendary.com.my/pages/privacy-policy" className="hover:underline whitespace-nowrap">
+              <span className="hidden text-gray-300 sm:inline">•</span>
+              <a
+                href="https://legendary.com.my/pages/privacy-policy"
+                className="whitespace-nowrap hover:underline"
+              >
                 Privacy Policy
               </a>
-              <span className="hidden sm:inline text-gray-300">•</span>
-              <a href="https://legendary.com.my/pages/terms-of-service" className="hover:underline whitespace-nowrap">
+              <span className="hidden text-gray-300 sm:inline">•</span>
+              <a
+                href="https://legendary.com.my/pages/terms-of-service"
+                className="whitespace-nowrap hover:underline"
+              >
                 Terms of Service
               </a>
-              <span className="hidden sm:inline text-gray-300">•</span>
-              <a href="https://legendary.com.my/" className="hover:underline whitespace-nowrap">
+              <span className="hidden text-gray-300 sm:inline">•</span>
+              <a
+                href="https://legendary.com.my/"
+                className="whitespace-nowrap hover:underline"
+              >
                 legendary.com.my
               </a>
             </span>
@@ -587,7 +546,7 @@ function FooterNote({ chatStarted }: { chatStarted: boolean }) {
       )}
       {chatStarted && (
         <div className="flex items-center">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             AI can make mistakes. Please verify the information.
           </p>
         </div>

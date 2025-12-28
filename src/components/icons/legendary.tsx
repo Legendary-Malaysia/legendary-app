@@ -9,7 +9,7 @@ export function LegendaryLogo({
 }) {
   return (
     <img
-      src="logo.png"
+      src="/logo.png"
       alt="Legendary Logo"
       width={width}
       height={height}

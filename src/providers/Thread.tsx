@@ -52,7 +52,10 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
       });
       return threads;
     } catch (e) {
-      console.warn("Failed to fetch threads (likely unsupported by custom backend):", e);
+      console.warn(
+        "Failed to fetch threads (likely unsupported by custom backend):",
+        e,
+      );
       return [];
     }
   }, [apiUrl, assistantId]);
