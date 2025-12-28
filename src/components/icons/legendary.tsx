@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export function LegendaryLogo({
   className,
   width,
@@ -8,7 +10,7 @@ export function LegendaryLogo({
   className?: string;
 }) {
   return (
-    <img
+    <Image
       src="/logo.png"
       alt="Legendary Logo"
       width={width}

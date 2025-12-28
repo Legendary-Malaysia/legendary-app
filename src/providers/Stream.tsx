@@ -40,12 +40,10 @@ const StreamContext = createContext<StreamContextType | undefined>(undefined);
 
 const StreamSession = ({
   children,
-  apiKey: _apiKey,
   apiUrl,
   assistantId: _assistantId,
 }: {
   children: ReactNode;
-  apiKey: string | null;
   apiUrl: string;
   assistantId: string;
 }) => {
@@ -363,7 +361,6 @@ export const StreamProvider: React.FC<{ children: ReactNode }> = ({
 
   return (
     <StreamSession
-      apiKey={apiKey}
       apiUrl={apiUrl}
       assistantId={assistantId}
     >
