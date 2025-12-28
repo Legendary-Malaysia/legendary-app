@@ -112,7 +112,7 @@ const StreamSession = ({
         const response = await fetch(`${normalizedApiUrl}/${_assistantId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages }),
+          body: JSON.stringify({ messages: apiMessages, config: {} }),
         });
 
         if (!response.ok || !response.body) {
@@ -140,41 +140,47 @@ const StreamSession = ({
           if (done) break;
 
           accumulated += decoder.decode(value, { stream: true });
-          const lines = accumulated.split("\n\n");
-          accumulated = lines.pop() || "";
+          const blocks = accumulated.split("\n\n");
+          accumulated = blocks.pop() || "";
 
-          for (const line of lines) {
-            if (line.trim().startsWith("data: ")) {
-              try {
-                const jsonStr = line.trim().slice(6);
-                const data = JSON.parse(jsonStr);
-                
-                if (data.node === "custom") {
-                  // Intermediate status updates
-                  setStatus(data.content || "");
-                } else if (data.node === "customer_service_team") {
-                  // Final response content
-                  if (!hasStartedTeam) {
-                    hasStartedTeam = true;
-                    setStatus(""); // Clear status when response begins
+          for (const block of blocks) {
+            const lines = block.split("\n");
+            for (const line of lines) {
+              if (line.trim().startsWith("data: ")) {
+                try {
+                  const jsonStr = line.trim().slice(6);
+                  const data = JSON.parse(jsonStr);
+                  
+                  if (data.node === "custom") {
+                    // Intermediate status updates
+                    setStatus(data.content || "");
+                  } else if (data.node === "customer_service_team") {
+                    // Final response content
+                    if (!hasStartedTeam) {
+                      hasStartedTeam = true;
+                      setStatus(""); // Clear status when response begins
+                    }
+                    teamContent += data.content || "";
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === aiMessageId ? { ...m, content: teamContent } : m,
+                      ),
+                    );
+                  } else if (data.error) {
+                      // Handle error event data
+                      throw new Error(data.error);
+                  } else if (!data.node && data.content) {
+                    // Fallback for old/unexpected format
+                    fullContent += data.content;
+                    setMessages((prev) =>
+                      prev.map((m) =>
+                        m.id === aiMessageId ? { ...m, content: fullContent } : m,
+                      ),
+                    );
                   }
-                  teamContent += data.content || "";
-                  setMessages((prev) =>
-                    prev.map((m) =>
-                      m.id === aiMessageId ? { ...m, content: teamContent } : m,
-                    ),
-                  );
-                } else if (!data.node && data.content) {
-                  // Fallback for old/unexpected format
-                  fullContent += data.content;
-                  setMessages((prev) =>
-                    prev.map((m) =>
-                      m.id === aiMessageId ? { ...m, content: fullContent } : m,
-                    ),
-                  );
+                } catch (e) {
+                  console.error("Error parsing SSE data:", e, line);
                 }
-              } catch (e) {
-                console.error("Error parsing SSE data:", e, line);
               }
             }
           }
