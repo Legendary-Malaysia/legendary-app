@@ -22,6 +22,7 @@ import {
   SquarePen,
   XIcon,
   Plus,
+  Send,
 } from "lucide-react";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
@@ -353,7 +354,7 @@ export function Thread() {
                   className="flex cursor-pointer items-center gap-2"
                   onClick={() => window.location.reload()}
                   animate={{
-                    marginLeft: !chatHistoryOpen ? 48 : 0,
+                    marginLeft: !chatHistoryOpen ? 8 : 0,
                   }}
                   transition={{
                     type: "spring",
@@ -441,7 +442,7 @@ export function Thread() {
                   <div
                     ref={dropRef}
                     className={cn(
-                      "bg-muted relative z-10 mx-auto mb-8 w-full max-w-3xl rounded-2xl shadow-xs transition-all",
+                      "bg-muted relative z-10 mx-auto mb-4 w-full max-w-3xl rounded-2xl shadow-xs transition-all",
                       dragOver
                         ? "border-primary border-2 border-dotted"
                         : "border border-solid",
@@ -516,7 +517,6 @@ export function Thread() {
                             className="ml-auto"
                           >
                             <LoaderCircle className="h-4 w-4 animate-spin" />
-                            Cancel
                           </Button>
                         ) : (
                           <Button
@@ -527,7 +527,7 @@ export function Thread() {
                               (!input.trim() && contentBlocks.length === 0)
                             }
                           >
-                            Send
+                            <Send className="size-5" />
                           </Button>
                         )}
                       </div>
@@ -537,6 +537,7 @@ export function Thread() {
               }
             />
           </StickToBottom>
+          <FooterNote chatStarted={chatStarted} />
         </motion.div>
         <div className="relative flex flex-col border-l">
           <div className="absolute inset-0 flex min-w-[30vw] flex-col">
@@ -553,6 +554,44 @@ export function Thread() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+
+function FooterNote({ chatStarted }: { chatStarted: boolean }) {
+  return (
+    <div className="flex flex-col items-center pb-4">
+      {!chatStarted && (
+        <div className="flex items-center gap-3 px-4 py-2">
+          <p className="text-xs text-gray-500 text-center w-full">
+            <span className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+              <a href="/disclaimer" className="hover:underline whitespace-nowrap">
+                Disclaimer
+              </a>
+              <span className="hidden sm:inline text-gray-300">•</span>
+              <a href="https://legendary.com.my/pages/privacy-policy" className="hover:underline whitespace-nowrap">
+                Privacy Policy
+              </a>
+              <span className="hidden sm:inline text-gray-300">•</span>
+              <a href="https://legendary.com.my/pages/terms-of-service" className="hover:underline whitespace-nowrap">
+                Terms of Service
+              </a>
+              <span className="hidden sm:inline text-gray-300">•</span>
+              <a href="https://legendary.com.my/" className="hover:underline whitespace-nowrap">
+                legendary.com.my
+              </a>
+            </span>
+          </p>
+        </div>
+      )}
+      {chatStarted && (
+        <div className="flex items-center">
+          <p className="text-xs text-muted-foreground">
+            AI can make mistakes. Please verify the information.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
