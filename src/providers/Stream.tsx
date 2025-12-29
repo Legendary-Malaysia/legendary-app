@@ -3,7 +3,6 @@ import React, {
   useContext,
   ReactNode,
   useState,
-  useEffect,
 } from "react";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { type Message } from "@langchain/langgraph-sdk";
@@ -33,10 +32,8 @@ const StreamContext = createContext<StreamContextType | undefined>(undefined);
 
 const StreamSession = ({
   children,
-  apiUrl,
 }: {
   children: ReactNode;
-  apiUrl: string;
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<string>("");
@@ -212,23 +209,6 @@ const StreamSession = ({
     metadata: {},
   } as any;
 
-  useEffect(() => {
-    // Basic connectivity check
-    fetch(apiUrl)
-      .then((res) => {
-        if (!res.ok && res.status !== 404) {
-          toast.warning("Backend might be unreachable", {
-            description: `Could not connect to ${apiUrl}`,
-          });
-        }
-      })
-      .catch(() => {
-        toast.error("Connection Failed", {
-          description: `FastAPI server not found at ${apiUrl}`,
-        });
-      });
-  }, [apiUrl]);
-
   return (
     <StreamContext.Provider value={streamValue}>
       {children}
@@ -239,16 +219,8 @@ const StreamSession = ({
 export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  // Get environment variables
-  if (!process.env.NEXT_PUBLIC_API_URL) {
-    throw new Error("NEXT_PUBLIC_API_URL is not defined");
-  }
-  const envApiUrl: string = process.env.NEXT_PUBLIC_API_URL;
-
   return (
-    <StreamSession
-      apiUrl={envApiUrl}
-    >
+    <StreamSession>
       {children}
     </StreamSession>
   );

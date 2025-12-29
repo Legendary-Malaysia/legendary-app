@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = process.env.CSAGENT_API_URL;
     if (!apiUrl) {
       return NextResponse.json(
         { error: "API URL not configured on server" },
