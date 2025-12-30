@@ -144,7 +144,7 @@ const StreamSession = ({
                 try {
                   const jsonStr = line.trim().slice(6);
                   const data = JSON.parse(jsonStr);
-
+                  if (data.event === "done") break;
                   if (data.node === "custom") {
                     // Intermediate status updates
                     setStatus(data.content || "");

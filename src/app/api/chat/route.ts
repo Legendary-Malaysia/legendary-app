@@ -1,31 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
 
-/**
- * Proxy endpoint for the FastAPI backend.
- */
+interface ChatRequest {
+  messages: Array<{ role: string; content: string }>;
+  config?: Record<string, unknown>;
+}
+
 export async function POST(request: NextRequest) {
+  const controller = new AbortController();
+  let connectionEstablished = false;
+  let timeoutId: NodeJS.Timeout | null = null;
+  
+  const abortHandler = () => controller.abort();
+  request.signal.addEventListener('abort', abortHandler);
+
   try {
-    const body = await request.json();
+    // Only timeout if connection isn't established within 30s
+    timeoutId = setTimeout(() => {
+      if (!connectionEstablished) {
+        console.warn("Connection timeout - aborting request");
+        controller.abort();
+      }
+    }, 30000);
+
+    const body = await request.json() as ChatRequest;
     const { messages, config } = body;
 
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return NextResponse.json(
+        { error: "Invalid request: messages array required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate environment variables
     const apiKey = process.env.CSAGENT_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "API key not configured on server" },
-        { status: 500 }
-      );
-    }
     const apiUrl = process.env.CSAGENT_API_URL;
-    if (!apiUrl) {
-      return NextResponse.json(
-        { error: "API URL not configured on server" },
-        { status: 500 }
-      );
-    }
     const assistantId = process.env.CSAGENT_ASSISTANT_ID;
-    if (!assistantId) {
+
+    if (!apiKey || !apiUrl || !assistantId) {
       return NextResponse.json(
-        { error: "Assistant ID not configured on server" },
+        { error: "Server configuration incomplete" },
         { status: 500 }
       );
     }
@@ -39,17 +53,25 @@ export async function POST(request: NextRequest) {
         "X-API-KEY": apiKey,
       },
       body: JSON.stringify({ messages, config }),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
       const errText = await response.text();
+      console.error("Backend error:", response.status, errText);
       return NextResponse.json(
-        { error: errText || "Failed to fetch from backend" },
+        { error: "Failed to fetch from backend" },
         { status: response.status }
       );
     }
 
-    // Stream the response back to the client
+    // Mark connection as established and clear timeout
+    connectionEstablished = true;
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+
     const stream = response.body;
     if (!stream) {
       return NextResponse.json(
@@ -58,7 +80,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return a streaming response
     return new NextResponse(stream, {
       headers: {
         "Content-Type": "text/event-stream",
@@ -66,11 +87,37 @@ export async function POST(request: NextRequest) {
         Connection: "keep-alive",
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Proxy error:", error);
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    );
+    
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    
+    // If streaming hasn't started, we can return a JSON error
+    if (!connectionEstablished) {
+      return NextResponse.json({ error: errorMessage }, { status: 500 });
+    }
+    
+    // If streaming started, log the error (connection likely broken)
+    console.error("Stream error after connection established:", errorMessage);
+    
+    // Attempt to send error as SSE event
+    const errorStream = new ReadableStream({
+      start(controller) {
+        const errorData = JSON.stringify({ error: errorMessage });
+        controller.enqueue(new TextEncoder().encode(`data: ${errorData}\n\n`));
+        controller.close();
+      }
+    });
+    
+    return new NextResponse(errorStream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+    request.signal.removeEventListener('abort', abortHandler);
   }
 }

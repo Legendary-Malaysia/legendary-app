@@ -1,5 +1,6 @@
 import tailwindcssAnimate from "tailwindcss-animate";
 import tailwindScrollbar from "tailwind-scrollbar";
+import plugin from "tailwindcss/plugin";
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -15,10 +16,6 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      components: {
-        ".scrollbar-pretty":
-          "overflow-y-scroll [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent",
       },
       colors: {
         background: "hsl(var(--background))",
@@ -64,5 +61,19 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate, tailwindScrollbar],
+  plugins: [tailwindcssAnimate, tailwindScrollbar({ nocompatible: true }),
+    // Proper way to add the custom scrollbar component
+    plugin(function ({ addComponents }) {
+      addComponents({
+        ".scrollbar-pretty": {
+          "@apply overflow-y-scroll scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent": {},
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            borderRadius: "9999px",
+          },
+        },
+      });
+    }),],
 };
