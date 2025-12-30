@@ -310,7 +310,10 @@ export function Thread() {
                     damping: 30,
                   }}
                 >
-                  <LegendaryLogo width={107} height={16} />
+                  <LegendaryLogo
+                    width={107}
+                    height={16}
+                  />
                 </motion.button>
               </div>
 
@@ -381,7 +384,10 @@ export function Thread() {
                 <div className="sticky bottom-0 flex flex-col items-center gap-8 bg-white">
                   {!chatStarted && (
                     <div className="flex items-center gap-3">
-                      <LegendaryLogo width={214} height={32} />
+                      <LegendaryLogo
+                        width={214}
+                        height={32}
+                      />
                     </div>
                   )}
 

@@ -9,9 +9,9 @@ export async function POST(request: NextRequest) {
   const controller = new AbortController();
   let connectionEstablished = false;
   let timeoutId: NodeJS.Timeout | null = null;
-  
+
   const abortHandler = () => controller.abort();
-  request.signal.addEventListener('abort', abortHandler);
+  request.signal.addEventListener("abort", abortHandler);
 
   try {
     // Only timeout if connection isn't established within 30s
@@ -22,13 +22,13 @@ export async function POST(request: NextRequest) {
       }
     }, 30000);
 
-    const body = await request.json() as ChatRequest;
+    const body = (await request.json()) as ChatRequest;
     const { messages, config } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
         { error: "Invalid request: messages array required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,11 +40,13 @@ export async function POST(request: NextRequest) {
     if (!apiKey || !apiUrl || !assistantId) {
       return NextResponse.json(
         { error: "Server configuration incomplete" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    const normalizedApiUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
+    const normalizedApiUrl = apiUrl.endsWith("/")
+      ? apiUrl.slice(0, -1)
+      : apiUrl;
 
     const response = await fetch(`${normalizedApiUrl}/${assistantId}`, {
       method: "POST",
@@ -61,7 +63,7 @@ export async function POST(request: NextRequest) {
       console.error("Backend error:", response.status, errText);
       return NextResponse.json(
         { error: "Failed to fetch from backend" },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
     if (!stream) {
       return NextResponse.json(
         { error: "No response body from backend" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -89,35 +91,24 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Proxy error:", error);
-    
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
-    
-    // If streaming hasn't started, we can return a JSON error
+
+    const errorMessage =
+      error instanceof Error ? error.message : "Internal server error";
+
+    // Only return error response if we haven't started streaming yet
     if (!connectionEstablished) {
       return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
-    
-    // If streaming started, log the error (connection likely broken)
-    console.error("Stream error after connection established:", errorMessage);
-    
-    // Attempt to send error as SSE event
-    const errorStream = new ReadableStream({
-      start(controller) {
-        const errorData = JSON.stringify({ error: errorMessage });
-        controller.enqueue(new TextEncoder().encode(`data: ${errorData}\n\n`));
-        controller.close();
-      }
-    });
-    
-    return new NextResponse(errorStream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      },
-    });
+
+    // Stream was already returned - connection will break naturally
+    // Client should handle the broken stream appropriately
+    console.error(
+      "Error after stream returned - connection will break:",
+      errorMessage,
+    );
+    throw error;
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
-    request.signal.removeEventListener('abort', abortHandler);
+    request.signal.removeEventListener("abort", abortHandler);
   }
 }

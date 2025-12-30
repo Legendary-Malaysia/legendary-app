@@ -1,9 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  ReactNode,
-  useState,
-} from "react";
+import React, { createContext, useContext, ReactNode, useState } from "react";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { type Message } from "@langchain/langgraph-sdk";
 import {
@@ -30,11 +25,7 @@ const useTypedStream = useStream<
 type StreamContextType = ReturnType<typeof useTypedStream>;
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
 
-const StreamSession = ({
-  children,
-}: {
-  children: ReactNode;
-}) => {
+const StreamSession = ({ children }: { children: ReactNode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
@@ -129,7 +120,7 @@ const StreamSession = ({
         let teamContent = "";
         let hasStartedTeam = false;
 
-        while (true) {
+        streamLoop: while (true) {
           const { done, value } = await reader.read();
           if (done) break;
 
@@ -144,7 +135,7 @@ const StreamSession = ({
                 try {
                   const jsonStr = line.trim().slice(6);
                   const data = JSON.parse(jsonStr);
-                  if (data.event === "done") break;
+                  if (data.event === "done") break streamLoop;
                   if (data.node === "custom") {
                     // Intermediate status updates
                     setStatus(data.content || "");
@@ -219,11 +210,7 @@ const StreamSession = ({
 export const StreamProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  return (
-    <StreamSession>
-      {children}
-    </StreamSession>
-  );
+  return <StreamSession>{children}</StreamSession>;
 };
 
 // Create a custom hook to use the context

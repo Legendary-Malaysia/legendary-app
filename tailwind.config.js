@@ -61,12 +61,15 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimate, tailwindScrollbar({ nocompatible: true }),
+  plugins: [
+    tailwindcssAnimate,
+    tailwindScrollbar({ nocompatible: true }),
     // Proper way to add the custom scrollbar component
     plugin(function ({ addComponents }) {
       addComponents({
         ".scrollbar-pretty": {
-          "@apply overflow-y-scroll scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent": {},
+          "@apply overflow-y-scroll scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent":
+            {},
           "&::-webkit-scrollbar": {
             width: "6px",
           },
@@ -75,5 +78,6 @@ export default {
           },
         },
       });
-    }),],
+    }),
+  ],
 };
