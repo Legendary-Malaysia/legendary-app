@@ -28,6 +28,13 @@ import {
   useArtifactContext,
 } from "./artifact";
 import { LegendaryLogo } from "../icons/legendary";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 function StickyToBottomContent(props: {
   content: ReactNode;
@@ -205,6 +212,40 @@ export function Thread() {
     (m) => m.type === "ai" || m.type === "tool",
   );
 
+  const LanguagePicker = () => {
+    if (chatStarted) return null;
+
+    const languages = [
+      { code: "en", name: "EN" },
+      { code: "id", name: "ID" },
+    ];
+
+    return (
+      <Select
+        value={stream.language}
+        onValueChange={(value) => stream.setLanguage(value as "en" | "id")}
+      >
+        <SelectTrigger className="w-[65px] border-gray-200 bg-white shadow-sm transition-all hover:bg-gray-50">
+          <SelectValue placeholder="Select Language" />
+        </SelectTrigger>
+        <SelectContent
+          align="end"
+          className="min-w-[65px]"
+        >
+          {languages.map((lang) => (
+            <SelectItem
+              key={lang.code}
+              value={lang.code}
+              className="w-[65px] hover:cursor-pointer"
+            >
+              {lang.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <div className="relative hidden lg:flex">
@@ -258,28 +299,13 @@ export function Thread() {
               : { duration: 0 }
           }
         >
-          {/* {!chatStarted && (
+          {!chatStarted && (
             <div className="absolute top-0 left-0 z-10 flex w-full items-center justify-between gap-3 p-2 pl-4">
-              <div>
-                {(!chatHistoryOpen || !isLargeScreen) && (
-                  <Button
-                    className="hover:bg-gray-100"
-                    variant="ghost"
-                    onClick={() => setChatHistoryOpen((p) => !p)}
-                  >
-                    {chatHistoryOpen ? (
-                      <PanelRightOpen className="size-5" />
-                    ) : (
-                      <PanelRightClose className="size-5" />
-                    )}
-                  </Button>
-                )}
-              </div>
               <div className="absolute top-2 right-4 flex items-center">
-                <OpenGitHubRepo />
+                <LanguagePicker />
               </div>
             </div>
-          )} */}
+          )}
           {chatStarted && (
             <div className="relative z-10 flex items-center justify-between gap-3 p-2">
               <div className="relative flex items-center justify-start gap-2">
@@ -318,6 +344,7 @@ export function Thread() {
               </div>
 
               <div className="flex items-center gap-4">
+                <LanguagePicker />
                 {/* <div className="flex items-center">
                   <OpenGitHubRepo />
                 </div> */}

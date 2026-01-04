@@ -22,7 +22,10 @@ const useTypedStream = useStream<
   }
 >;
 
-type StreamContextType = ReturnType<typeof useTypedStream>;
+type StreamContextType = ReturnType<typeof useTypedStream> & {
+  language: "en" | "id";
+  setLanguage: (lang: "en" | "id") => void;
+};
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
 
 const StreamSession = ({ children }: { children: ReactNode }) => {
@@ -30,6 +33,13 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
   const [status, setStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [language, setLanguage] = useState<"en" | "id">("en");
+
+  const handleSetLanguage = (lang: "en" | "id") => {
+    if (messages.length === 0) {
+      setLanguage(lang);
+    }
+  };
 
   /**
    * Custom adapter for the FastAPI SSE endpoint.
@@ -59,6 +69,8 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
     status,
     isLoading,
     error,
+    language,
+    setLanguage: handleSetLanguage,
     submit: async (params: any) => {
       setIsLoading(true);
       setError(null);
@@ -96,7 +108,7 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: apiMessages,
-            config: {},
+            config: { language },
           }),
         });
 
