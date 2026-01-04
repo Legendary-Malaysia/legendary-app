@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef, memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useStreamContext } from "@/providers/Stream";
@@ -77,6 +77,165 @@ function ScrollToBottom(props: { className?: string }) {
   );
 }
 
+const SUGGESTED_QUESTIONS: Record<"en" | "id", string[]> = {
+  en: [
+    "Hi! Can you tell me what Orchid fragrance is all about?",
+    "How long does Orchid fragrance last?",
+    "What occasions would Orchid be suitable for?",
+    "Who would love Orchid fragrance?",
+    "What are the scent notes in Mahsuri?",
+    "What's the story behind Mahsuri?",
+    "How does the water-based formula work in Three Wishes?",
+    "Does Three Wishes have any skincare benefits?",
+    "What does each 'wish' represent?",
+    "Who is Three Wishes ideal for?",
+    "How many fragrances are in the Nyonya Series?",
+    "What makes the Nyonya Series unique?",
+    "Who is Spirit I ideal for?",
+    "What's the difference between Spirit I and Spirit II?",
+    "What makes Violet special or unique?",
+    "Who is Violet ideal for?",
+    "What does Man smell like? What are the notes?",
+    "What makes Man special or unique?",
+    "Can I wear Man both during the day and at night?",
+    "What is your most well-known perfume?",
+    "Where can I find Legendary perfumes?",
+    "What types of perfumes do you offer?",
+    "How can I contact Legendary?"
+  ],
+  id: [
+    "Hi! Bisakah kamu ceritakan apa itu parfum Orchid?",  
+    "Berapa lama parfum Orchid bertahan?",  
+    "Untuk acara apa saja Orchid cocok digunakan?",  
+    "Siapa yang akan menyukai parfum Orchid?",  
+    "Apa saja aroma (scent notes) dalam Mahsuri?",  
+    "Apa kisah di balik Mahsuri?",  
+    "Bagaimana formula berbasis air bekerja dalam Three Wishes?",  
+    "Apakah Three Wishes memiliki manfaat untuk perawatan kulit?",  
+    "Apa yang diwakili oleh masing-masing 'wish'?",  
+    "Siapa yang cocok menggunakan Three Wishes?",  
+    "Berapa banyak parfum yang ada dalam Seri Nyonya?",  
+    "Apa yang membuat Seri Nyonya unik?",  
+    "Siapa yang cocok menggunakan Spirit I?",  
+    "Apa perbedaan antara Spirit I dan Spirit II?",  
+    "Apa yang membuat Violet istimewa atau unik?",  
+    "Siapa yang cocok menggunakan Violet?",  
+    "Apa aroma dari Man? Apa saja scent notes-nya?",  
+    "Apa yang membuat Man istimewa atau unik?",  
+    "Bisakah saya memakai Man baik di siang maupun malam hari?",  
+    "Apa parfummu yang paling terkenal?",  
+    "Di mana saya bisa menemukan parfum Legendary?",  
+    "Apa jenis parfum yang kamu tawarkan?",  
+    "Bagaimana cara saya menghubungi Legendary?"  
+  ],
+};
+
+const TickerRow = memo(
+  ({
+    items,
+    reverse,
+    onSelect,
+  }: {
+    items: string[];
+    reverse?: boolean;
+    onSelect: (q: string) => void;
+  }) => {
+    // Use a stable random duration
+    const duration = useRef(50 + Math.random() * 20).current;
+
+    return (
+      <div className="group flex w-full overflow-hidden py-1 px-4">
+        <motion.div
+          className="flex gap-3 whitespace-nowrap"
+          animate={{
+            x: reverse ? [-1500, 0] : [0, -1500],
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: duration,
+            ease: "linear",
+            repeatType: "loop",
+          }}
+          style={{ width: "max-content" }}
+        >
+          {/* Repeat items to ensure continuous scrolling */}
+          {[...items, ...items, ...items, ...items].map((q, i) => (
+            <Button
+              key={`${q}-${i}`}
+              variant="outline"
+              size="sm"
+              className="h-9 rounded-full border-gray-200 bg-white px-4 text-sm font-medium text-gray-600 shadow-sm transition-all hover:bg-gray-100 hover:text-gray-900 active:scale-95"
+              onClick={() => onSelect(q)}
+            >
+              {q}
+            </Button>
+          ))}
+        </motion.div>
+      </div>
+    );
+  },
+);
+
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+const QuestionTicker = memo(
+  ({
+    onSelect,
+    language,
+  }: {
+    onSelect: (q: string) => void;
+    language: "en" | "id";
+  }) => {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+      setMounted(true);
+    }, []);
+
+    const questions = SUGGESTED_QUESTIONS[language] || SUGGESTED_QUESTIONS.en;
+
+    // Create independently randomized pools for each row, stable per language
+    const row1Pool = useMemo(() => shuffleArray(questions), [questions]);
+    const row2Pool = useMemo(() => shuffleArray(questions), [questions]);
+    const row3Pool = useMemo(() => shuffleArray(questions), [questions]);
+
+    if (!mounted) return null;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative mt-2 flex w-full max-w-3xl flex-col gap-1 overflow-hidden"
+      >
+        {/* Gradient Overlays */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-white to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-20 bg-gradient-to-l from-white to-transparent" />
+
+        <TickerRow
+          items={row1Pool}
+          onSelect={onSelect}
+        />
+        <TickerRow
+          items={row2Pool}
+          reverse
+          onSelect={onSelect}
+        />
+        <TickerRow
+          items={row3Pool}
+          onSelect={onSelect}
+        />
+      </motion.div>
+    );
+  },
+);
+
 export function Thread() {
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
@@ -151,9 +310,9 @@ export function Thread() {
     prevMessageLength.current = messages.length;
   }, [messages]);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if ((input.trim().length === 0 && contentBlocks.length === 0) || isLoading)
+  const submitMessage = (text: string, overrideBlocks?: any[]) => {
+    const blocks = overrideBlocks ?? contentBlocks;
+    if ((text.trim().length === 0 && blocks.length === 0) || isLoading)
       return;
     setFirstTokenReceived(false);
 
@@ -161,8 +320,8 @@ export function Thread() {
       id: uuidv4(),
       type: "human",
       content: [
-        ...(input.trim().length > 0 ? [{ type: "text", text: input }] : []),
-        ...contentBlocks,
+        ...(text.trim().length > 0 ? [{ type: "text", text: text }] : []),
+        ...blocks,
       ] as Message["content"],
     };
 
@@ -191,6 +350,11 @@ export function Thread() {
 
     setInput("");
     setContentBlocks([]);
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    submitMessage(input);
   };
 
   const handleRegenerate = (
@@ -459,38 +623,6 @@ export function Thread() {
                       />
 
                       <div className="flex items-center gap-6 p-2 pt-4">
-                        {/* <div>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id="render-tool-calls"
-                              checked={hideToolCalls ?? false}
-                              onCheckedChange={setHideToolCalls}
-                            />
-                            <Label
-                              htmlFor="render-tool-calls"
-                              className="text-sm text-gray-600"
-                            >
-                              Hide Tool Calls
-                            </Label>
-                          </div>
-                        </div> */}
-                        {/* <Label
-                          htmlFor="file-input"
-                          className="flex cursor-pointer items-center gap-2"
-                        >
-                          <Plus className="size-5 text-gray-600" />
-                          <span className="text-sm text-gray-600">
-                            Upload PDF or Image
-                          </span>
-                        </Label>
-                        <input
-                          id="file-input"
-                          type="file"
-                          onChange={handleFileUpload}
-                          multiple
-                          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
-                          className="hidden"
-                        /> */}
                         {stream.isLoading ? (
                           <Button
                             key="stop"
@@ -514,6 +646,13 @@ export function Thread() {
                       </div>
                     </form>
                   </div>
+
+                  {!chatStarted && (
+                    <QuestionTicker
+                      language={stream.language}
+                      onSelect={(q) => submitMessage(q, [])}
+                    />
+                  )}
                 </div>
               }
             />
