@@ -78,13 +78,12 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
 
       // Optimistically add the human message
       const addedMessages = params?.messages || [];
-      setMessages((prev) => [...prev, ...addedMessages]);
+      const newMessages = [...messages, ...addedMessages];
+      setMessages(newMessages);
 
       try {
-        const currentMessages = [...messages, ...addedMessages];
-
         // Map messages to the format expected by the API
-        const apiMessages = currentMessages
+        const apiMessages = newMessages
           .map((m) => {
             const role =
               m.type === "human"

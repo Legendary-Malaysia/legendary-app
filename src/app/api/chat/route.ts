@@ -22,7 +22,17 @@ export async function POST(request: NextRequest) {
       }
     }, 30000);
 
-    const body = (await request.json()) as ChatRequest;
+    let body: ChatRequest;
+    // Specific handling for JSON parse errors
+    try {
+      body = (await request.json()) as ChatRequest;
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }, // ✅ Correct status for client error
+      );
+    }
     const { messages, config } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -106,7 +116,6 @@ export async function POST(request: NextRequest) {
       "Error after stream returned - connection will break:",
       errorMessage,
     );
-    throw error;
   } finally {
     if (timeoutId) clearTimeout(timeoutId);
     request.signal.removeEventListener("abort", abortHandler);

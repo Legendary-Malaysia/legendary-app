@@ -101,32 +101,32 @@ const SUGGESTED_QUESTIONS: Record<"en" | "id", string[]> = {
     "What is your most well-known perfume?",
     "Where can I find Legendary perfumes?",
     "What types of perfumes do you offer?",
-    "How can I contact Legendary?"
+    "How can I contact Legendary?",
   ],
   id: [
-    "Hi! Bisakah kamu ceritakan apa itu parfum Orchid?",  
-    "Berapa lama parfum Orchid bertahan?",  
-    "Untuk acara apa saja Orchid cocok digunakan?",  
-    "Siapa yang akan menyukai parfum Orchid?",  
-    "Apa saja aroma (scent notes) dalam Mahsuri?",  
-    "Apa kisah di balik Mahsuri?",  
-    "Bagaimana formula berbasis air bekerja dalam Three Wishes?",  
-    "Apakah Three Wishes memiliki manfaat untuk perawatan kulit?",  
-    "Apa yang diwakili oleh masing-masing 'wish'?",  
-    "Siapa yang cocok menggunakan Three Wishes?",  
-    "Berapa banyak parfum yang ada dalam Seri Nyonya?",  
-    "Apa yang membuat Seri Nyonya unik?",  
-    "Siapa yang cocok menggunakan Spirit I?",  
-    "Apa perbedaan antara Spirit I dan Spirit II?",  
-    "Apa yang membuat Violet istimewa atau unik?",  
-    "Siapa yang cocok menggunakan Violet?",  
-    "Apa aroma dari Man? Apa saja scent notes-nya?",  
-    "Apa yang membuat Man istimewa atau unik?",  
-    "Bisakah saya memakai Man baik di siang maupun malam hari?",  
-    "Apa parfummu yang paling terkenal?",  
-    "Di mana saya bisa menemukan parfum Legendary?",  
-    "Apa jenis parfum yang kamu tawarkan?",  
-    "Bagaimana cara saya menghubungi Legendary?"  
+    "Hi! Bisakah kamu ceritakan apa itu parfum Orchid?",
+    "Berapa lama parfum Orchid bertahan?",
+    "Untuk acara apa saja Orchid cocok digunakan?",
+    "Siapa yang akan menyukai parfum Orchid?",
+    "Apa saja aroma (scent notes) dalam Mahsuri?",
+    "Apa kisah di balik Mahsuri?",
+    "Bagaimana formula berbasis air bekerja dalam Three Wishes?",
+    "Apakah Three Wishes memiliki manfaat untuk perawatan kulit?",
+    "Apa yang diwakili oleh masing-masing 'wish'?",
+    "Siapa yang cocok menggunakan Three Wishes?",
+    "Berapa banyak parfum yang ada dalam Seri Nyonya?",
+    "Apa yang membuat Seri Nyonya unik?",
+    "Siapa yang cocok menggunakan Spirit I?",
+    "Apa perbedaan antara Spirit I dan Spirit II?",
+    "Apa yang membuat Violet istimewa atau unik?",
+    "Siapa yang cocok menggunakan Violet?",
+    "Apa aroma dari Man? Apa saja scent notes-nya?",
+    "Apa yang membuat Man istimewa atau unik?",
+    "Bisakah saya memakai Man baik di siang maupun malam hari?",
+    "Apa parfummu yang paling terkenal?",
+    "Di mana saya bisa menemukan parfum Legendary?",
+    "Apa jenis parfum yang kamu tawarkan?",
+    "Bagaimana cara saya menghubungi Legendary?",
   ],
 };
 
@@ -144,7 +144,7 @@ const TickerRow = memo(
     const duration = useRef(50 + Math.random() * 20).current;
 
     return (
-      <div className="group flex w-full overflow-hidden py-1 px-4">
+      <div className="group flex w-full overflow-hidden px-4 py-1">
         <motion.div
           className="flex gap-3 whitespace-nowrap"
           animate={{
@@ -312,8 +312,7 @@ export function Thread() {
 
   const submitMessage = (text: string, overrideBlocks?: any[]) => {
     const blocks = overrideBlocks ?? contentBlocks;
-    if ((text.trim().length === 0 && blocks.length === 0) || isLoading)
-      return;
+    if ((text.trim().length === 0 && blocks.length === 0) || isLoading) return;
     setFirstTokenReceived(false);
 
     const newHumanMessage: Message = {
@@ -361,7 +360,7 @@ export function Thread() {
     parentCheckpoint: Checkpoint | null | undefined,
   ) => {
     // Do this so the loading state is correct
-    prevMessageLength.current = prevMessageLength.current - 1;
+    prevMessageLength.current = Math.max(0, prevMessageLength.current - 1);
     setFirstTokenReceived(false);
     stream.submit(undefined, {
       checkpoint: parentCheckpoint,
