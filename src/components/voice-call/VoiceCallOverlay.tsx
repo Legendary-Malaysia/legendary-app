@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { PhoneOff, Mic, MicOff, X } from "lucide-react";
+import { PhoneOff, Mic, MicOff, X, PhoneCall } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useWebSocket,
@@ -134,7 +134,6 @@ export function VoiceCallOverlay({
         case "audio":
           const audioData = base64ToArrayBuffer(message.data);
           enqueueAudio(audioData);
-          setCurrentSpeaker("ai");
           break;
 
         case "interrupted":
@@ -144,7 +143,6 @@ export function VoiceCallOverlay({
 
         case "turn_complete":
           resumeAudio();
-          setCurrentSpeaker(null);
           break;
 
         case "error":
@@ -162,20 +160,29 @@ export function VoiceCallOverlay({
     (audioData) => {
       if (!isMuted) {
         send({ type: "audio", data: audioData });
-        setCurrentSpeaker("user");
       }
     },
   );
 
   // Update speaker state based on recording/playing
   useEffect(() => {
-    if (isRecording && !isMuted) {
-      setCurrentSpeaker("user");
-    } else if (isPlaying) {
+    let timeoutId: NodeJS.Timeout;
+
+    if (isPlaying) {
       setCurrentSpeaker("ai");
+    } else if (isRecording && !isMuted) {
+      setCurrentSpeaker("user");
     } else if (!isRecording && !isPlaying) {
-      setCurrentSpeaker(null);
+      // Add delay before clearing AI speaker status to prevent flickering
+      // during buffer underruns or between chunks
+      timeoutId = setTimeout(() => {
+        setCurrentSpeaker(null);
+      }, 500);
     }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [isRecording, isPlaying, isMuted]);
 
   // Handle overlay open/close
@@ -300,7 +307,7 @@ export function VoiceCallOverlay({
               status === "connecting" && "animate-pulse",
             )}
           >
-            <span className="text-4xl">🤖</span>
+            <PhoneCall />
           </div>
         </div>
 
@@ -315,7 +322,7 @@ export function VoiceCallOverlay({
         {/* Controls */}
         <div className="mt-4 flex items-center justify-center gap-6">
           {/* Mute Button */}
-          <button
+          {/* <button
             onClick={handleToggleMute}
             disabled={!isConnected}
             className={cn(
@@ -332,7 +339,7 @@ export function VoiceCallOverlay({
             ) : (
               <Mic className="h-6 w-6" />
             )}
-          </button>
+          </button> */}
 
           {/* End Call Button */}
           <button
