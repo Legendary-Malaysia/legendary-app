@@ -268,8 +268,7 @@ export function VoiceCallOverlay({
         className={cn(
           "relative z-10 flex flex-col items-center justify-between",
           "h-[80vh] max-h-[600px] w-full max-w-md p-8",
-          "rounded-3xl bg-gradient-to-b from-gray-900 to-gray-950",
-          "border border-gray-800 shadow-2xl",
+          "rounded-3xl bg-gradient-to-b from-black to-gray-900",
           "animate-in zoom-in-95 duration-300",
         )}
       >
@@ -303,11 +302,11 @@ export function VoiceCallOverlay({
               "relative h-32 w-32 rounded-full",
               "bg-gradient-to-br from-indigo-500 to-purple-600",
               "flex items-center justify-center",
-              "shadow-lg shadow-indigo-500/30",
+              "shadow-lg shadow-indigo-700",
               status === "connecting" && "animate-pulse",
             )}
           >
-            <PhoneCall />
+            <PhoneCall className="h-8 w-8 text-gray-300" />
           </div>
         </div>
 
@@ -370,6 +369,11 @@ export function VoiceCallOverlay({
           {isMuted && isConnected && (
             <span className="text-sm text-amber-400">Muted</span>
           )}
+        </div>
+        <div className="mt-4 h-6">
+          <span className="text-sm text-gray-500">
+            AI can make mistakes. Please verify the information.
+          </span>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Phone } from "lucide-react";
+import { PhoneCall } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { VoiceCallOverlay } from "./VoiceCallOverlay";
@@ -25,7 +25,7 @@ export interface VoiceCallButtonProps extends Omit<ButtonProps, "onClick"> {
 // ============ MAIN COMPONENT ============
 
 export function VoiceCallButton({
-  label = "Start Voice Call",
+  label = "AI Voice Chat",
   wsUrl,
   enableSearch = false,
   enableFunctions = true,
@@ -58,7 +58,7 @@ export function VoiceCallButton({
       >
         {children ?? (
           <>
-            <Phone className="h-4 w-4" />
+            <PhoneCall className="h-4 w-4" />
             {label}
           </>
         )}

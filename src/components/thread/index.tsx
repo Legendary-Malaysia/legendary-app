@@ -531,7 +531,8 @@ export function Thread() {
             <StickyToBottomContent
               className={cn(
                 "absolute inset-0 overflow-y-scroll px-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent",
-                !chatStarted && "mt-[25vh] flex flex-col items-stretch",
+                !chatStarted &&
+                  "flex flex-col items-stretch pt-[10vh] sm:pt-[25vh]",
                 chatStarted && "grid grid-rows-[1fr_auto]",
               )}
               contentClassName="pt-8 pb-16 max-w-3xl mx-auto flex flex-col gap-4 w-full"
@@ -572,7 +573,7 @@ export function Thread() {
                 </>
               }
               footer={
-                <div className="sticky bottom-0 flex flex-col items-center gap-8 bg-white">
+                <div className="sticky bottom-0 flex flex-col items-center gap-4 bg-white sm:gap-8">
                   {!chatStarted && (
                     <div className="flex items-center gap-3">
                       <LegendaryLogo
@@ -653,7 +654,7 @@ export function Thread() {
                         language={stream.language}
                         onSelect={(q) => submitMessage(q, [])}
                       />
-                      <VoiceCallButton />
+                      <VoiceCallButton className="bg-black hover:bg-gray-700" />
                     </>
                   )}
                 </div>
