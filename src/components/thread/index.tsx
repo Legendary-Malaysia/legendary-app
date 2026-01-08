@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { VoiceCallButton } from "@/components/voice-call";
 
 function StickyToBottomContent(props: {
   content: ReactNode;
@@ -647,10 +648,13 @@ export function Thread() {
                   </div>
 
                   {!chatStarted && (
-                    <QuestionTicker
-                      language={stream.language}
-                      onSelect={(q) => submitMessage(q, [])}
-                    />
+                    <>
+                      <QuestionTicker
+                        language={stream.language}
+                        onSelect={(q) => submitMessage(q, [])}
+                      />
+                      <VoiceCallButton />
+                    </>
                   )}
                 </div>
               }
