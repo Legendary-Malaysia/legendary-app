@@ -372,7 +372,7 @@ const pcmToAudioBuffer = async (
 const playAudioBuffer = (
   audioContext: AudioContext,
   audioBuffer: AudioBuffer,
-  sourceRef: React.MutableRefObject<AudioBufferSourceNode | null>,
+  sourceRef: React.RefObject<AudioBufferSourceNode | null>,
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const source = audioContext.createBufferSource();
