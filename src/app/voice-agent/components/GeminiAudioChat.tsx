@@ -44,6 +44,7 @@ type WebSocketMessage =
   | { type: "ready"; features?: { available_functions?: string[] } }
   | { type: "audio"; data: string }
   | { type: "text"; data: string }
+  | { type: "interrupted"; message: string }
   | { type: "tool_call"; function_name: string; arguments: Record<string, any> }
   | { type: "tool_result"; function_name: string; result: any }
   | { type: "search_code"; code: string }
@@ -232,6 +233,12 @@ function useAudioPlayer() {
   const shouldStopRef = useRef(false);
 
   const enqueueAudio = useCallback((audioData: ArrayBuffer) => {
+    // If we were stopped, resume now that new audio is coming
+    if (shouldStopRef.current) {
+      console.log("Resuming audio playback for new response");
+      shouldStopRef.current = false;
+    }
+
     audioQueueRef.current.push(audioData);
     if (!isPlayingRef.current && !shouldStopRef.current) {
       playQueue();
@@ -412,6 +419,25 @@ export default function GeminiAudioChat() {
           }
           break;
 
+        case "interrupted":
+          console.log("AI generation interrupted");
+          stopAudio(); // Stop playing any queued audio
+          setTranscript((prev) => [
+            ...prev,
+            {
+              id: crypto.randomUUID(),
+              speaker: "system",
+              content: "Interrupted",
+              timestamp,
+            },
+          ]);
+          break;
+
+        case "turn_complete":
+          console.log("Turn complete, ready for new audio");
+          resumeAudio(); // Re-enable audio playback for the next response
+          break;
+
         case "audio":
           const audioData = base64ToArrayBuffer(message.data);
           enqueueAudio(audioData);
@@ -473,7 +499,7 @@ export default function GeminiAudioChat() {
             {
               id: crypto.randomUUID(),
               speaker: "system",
-              content: `❌ Error: ${message.data}`,
+              content: `Error: ${message.data}`,
               timestamp,
             },
           ]);
@@ -512,13 +538,7 @@ export default function GeminiAudioChat() {
   const handleStopRecording = useCallback(() => {
     stopRecording();
     setStatus("connected");
-
-    // Stop any playing audio
-    stopAudio();
-
-    // Send interrupt signal to server to stop generating audio
-    send({ type: "interrupt" });
-  }, [stopRecording, setStatus, stopAudio, send]);
+  }, [stopRecording, setStatus]);
 
   const handleSendText = useCallback(() => {
     if (!textInput.trim()) return;
