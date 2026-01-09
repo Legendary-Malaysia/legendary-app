@@ -673,7 +673,10 @@ export function Thread() {
               }
             />
           </StickToBottom>
-          <FooterNote chatStarted={chatStarted} language={stream.language} />
+          <FooterNote
+            chatStarted={chatStarted}
+            language={stream.language}
+          />
         </motion.div>
         <div className="relative flex flex-col border-l">
           <div className="absolute inset-0 flex min-w-[30vw] flex-col">
@@ -694,7 +697,13 @@ export function Thread() {
   );
 }
 
-function FooterNote({ chatStarted, language }: { chatStarted: boolean, language: string }) {
+function FooterNote({
+  chatStarted,
+  language,
+}: {
+  chatStarted: boolean;
+  language: string;
+}) {
   return (
     <div className="flex flex-col items-center pb-4">
       {!chatStarted && (

@@ -96,23 +96,20 @@ export const playAudioBuffer = (
     source.buffer = audioBuffer;
     source.connect(audioContext.destination);
 
-    (
-      sourceRef as React.MutableRefObject<AudioBufferSourceNode | null>
-    ).current = source;
+    (sourceRef as React.RefObject<AudioBufferSourceNode | null>).current =
+      source;
 
     source.onended = () => {
-      (
-        sourceRef as React.MutableRefObject<AudioBufferSourceNode | null>
-      ).current = null;
+      (sourceRef as React.RefObject<AudioBufferSourceNode | null>).current =
+        null;
       resolve();
     };
 
     try {
       source.start();
     } catch (error) {
-      (
-        sourceRef as React.MutableRefObject<AudioBufferSourceNode | null>
-      ).current = null;
+      (sourceRef as React.RefObject<AudioBufferSourceNode | null>).current =
+        null;
       reject(error);
     }
   });

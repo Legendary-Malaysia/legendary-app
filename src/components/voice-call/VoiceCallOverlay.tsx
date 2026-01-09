@@ -164,6 +164,19 @@ export function VoiceCallOverlay({
     },
   );
 
+  const handleEndCall = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    }
+    stopAudio();
+    send({ type: "stop" });
+    disconnect();
+    setCallStartTime(null);
+    setCurrentSpeaker(null);
+    setIsMuted(false);
+    onClose();
+  }, [isRecording, stopRecording, stopAudio, send, disconnect, onClose]);
+
   // Update speaker state based on recording/playing
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -192,8 +205,7 @@ export function VoiceCallOverlay({
     } else {
       handleEndCall();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, connect, handleEndCall]);
 
   // Start recording when connected
   useEffect(() => {
@@ -205,25 +217,11 @@ export function VoiceCallOverlay({
         }
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, isOpen]);
+  }, [status, isOpen, isRecording, startRecording, setStatus]);
 
-  const handleEndCall = useCallback(() => {
-    if (isRecording) {
-      stopRecording();
-    }
-    stopAudio();
-    send({ type: "stop" });
-    disconnect();
-    setCallStartTime(null);
-    setCurrentSpeaker(null);
-    setIsMuted(false);
-    onClose();
-  }, [isRecording, stopRecording, stopAudio, send, disconnect, onClose]);
-
-  const handleToggleMute = useCallback(() => {
-    setIsMuted((prev) => !prev);
-  }, []);
+  // const handleToggleMute = useCallback(() => {
+  //   setIsMuted((prev) => !prev);
+  // }, []);
 
   const statusText = useMemo(() => {
     const statusMap: Record<ConnectionStatus, string> = {
