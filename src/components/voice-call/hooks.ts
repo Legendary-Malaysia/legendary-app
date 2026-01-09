@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 // Configuration
 export const CONFIG = {
-  WS_URL: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000",
+  WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   SAMPLE_RATE: 16000,
   RECEIVE_SAMPLE_RATE: 24000,
   MAX_RECONNECT_ATTEMPTS: 5,
@@ -47,13 +47,7 @@ export const floatTo16BitPCM = (float32Array: Float32Array): Int16Array => {
 
 export const arrayBufferToBase64 = (buffer: ArrayBufferLike): string => {
   const bytes = new Uint8Array(buffer);
-  let binary = "";
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
-    binary += String.fromCharCode.apply(null, Array.from(chunk));
-  }
-  return btoa(binary);
+  return btoa(String.fromCharCode(...bytes));
 };
 
 export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
@@ -70,6 +64,13 @@ export const pcmToAudioBuffer = async (
   pcmData: ArrayBufferLike,
   sampleRate: number,
 ): Promise<AudioBuffer> => {
+  const byteLength = (pcmData as ArrayBuffer).byteLength;
+  if (byteLength % 2 !== 0) {
+    throw new Error(
+      `Invalid PCM data: byte length ${byteLength} is not a multiple of 2 (required for 16-bit samples)`,
+    );
+  }
+
   const int16Array = new Int16Array(pcmData);
   const float32Array = new Float32Array(int16Array.length);
 
