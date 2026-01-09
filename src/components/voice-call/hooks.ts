@@ -47,7 +47,14 @@ export const floatTo16BitPCM = (float32Array: Float32Array): Int16Array => {
 
 export const arrayBufferToBase64 = (buffer: ArrayBufferLike): string => {
   const bytes = new Uint8Array(buffer);
-  return btoa(String.fromCharCode(...bytes));
+  const chunkSize = 0x8000; // 32KB
+  const chunks: string[] = [];
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + chunkSize)));
+  }
+
+  return btoa(chunks.join(""));
 };
 
 export const base64ToArrayBuffer = (base64: string): ArrayBuffer => {
@@ -433,8 +440,9 @@ export function useAudioPlayer() {
       try {
         source.stop();
         source.disconnect();
-      } catch {
+      } catch (error) {
         // Already stopped or disconnected
+        console.error("Already stopped or disconnected");
       }
     });
     activeSourcesRef.current.clear();
