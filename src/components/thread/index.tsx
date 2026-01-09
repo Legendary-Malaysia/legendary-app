@@ -274,7 +274,6 @@ export function Thread() {
     return () => {
       stream.stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

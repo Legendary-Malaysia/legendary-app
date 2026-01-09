@@ -96,20 +96,17 @@ export const playAudioBuffer = (
     source.buffer = audioBuffer;
     source.connect(audioContext.destination);
 
-    (sourceRef as React.RefObject<AudioBufferSourceNode | null>).current =
-      source;
+    sourceRef.current = source;
 
     source.onended = () => {
-      (sourceRef as React.RefObject<AudioBufferSourceNode | null>).current =
-        null;
+      sourceRef.current = null;
       resolve();
     };
 
     try {
       source.start();
     } catch (error) {
-      (sourceRef as React.RefObject<AudioBufferSourceNode | null>).current =
-        null;
+      sourceRef.current = null;
       reject(error);
     }
   });
