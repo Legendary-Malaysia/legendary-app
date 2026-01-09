@@ -1,4 +1,11 @@
-import React, { createContext, useContext, ReactNode, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useState,
+  useRef,
+  useMemo,
+} from "react";
 import { useStream } from "@langchain/langgraph-sdk/react";
 import { type Message } from "@langchain/langgraph-sdk";
 import {
@@ -34,12 +41,21 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [language, setLanguage] = useState<"en" | "id">("en");
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const handleSetLanguage = (lang: "en" | "id") => {
-    if (messages.length === 0) {
-      setLanguage(lang);
-    }
-  };
+  const handleSetLanguage = React.useCallback(
+    (lang: "en" | "id") => {
+      setLanguage((prevLang) => {
+        // Note: messages.length check might be slightly stale if using messages from closure,
+        // but it's fine for this purpose.
+        if (messages.length === 0) {
+          return lang;
+        }
+        return prevLang;
+      });
+    },
+    [messages.length],
+  );
 
   /**
    * Custom adapter for the FastAPI SSE endpoint.
@@ -64,152 +80,181 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
    * omit SDK-specific properties that our FastAPI backend doesn't use. If the
    * SDK's `StreamContextType` changes, review this adapter for compatibility.
    */
-  const streamValue: StreamContextType = {
-    messages,
-    status,
-    isLoading,
-    error,
-    language,
-    setLanguage: handleSetLanguage,
-    submit: async (params: any) => {
-      setIsLoading(true);
-      setError(null);
-      setStatus("");
+  const streamValue: StreamContextType = useMemo(
+    () =>
+      ({
+        messages,
+        status,
+        isLoading,
+        error,
+        language,
+        setLanguage: handleSetLanguage,
+        submit: async (params: any) => {
+          // Abort any existing request before starting a new one
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+          }
 
-      // Optimistically add the human message
-      const addedMessages = params?.messages || [];
-      const newMessages = [...messages, ...addedMessages];
-      setMessages(newMessages);
+          const controller = new AbortController();
+          abortControllerRef.current = controller;
+          setIsLoading(true);
+          setError(null);
+          setStatus("");
 
-      try {
-        // Map messages to the format expected by the API
-        const apiMessages = newMessages
-          .map((m) => {
-            const role =
-              m.type === "human"
-                ? "user"
-                : m.type === "ai"
-                  ? "assistant"
-                  : m.type;
-            const content =
-              typeof m.content === "string"
-                ? m.content
-                : Array.isArray(m.content)
-                  ? (m.content.find((c: any) => c.type === "text") as any)
-                      ?.text || ""
-                  : "";
-            return { role, content };
-          })
-          .filter((m) => m.content !== "" || m.role === "assistant"); // Keep assistant messages even if empty (streaming)
+          // Optimistically add the human message
+          const addedMessages = params?.messages || [];
+          const newMessages = [...messages, ...addedMessages];
+          setMessages(newMessages);
 
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: apiMessages,
-            config: { language },
-          }),
-        });
+          try {
+            // Map messages to the format expected by the API
+            const apiMessages = newMessages
+              .map((m) => {
+                const role =
+                  m.type === "human"
+                    ? "user"
+                    : m.type === "ai"
+                      ? "assistant"
+                      : m.type;
+                const content =
+                  typeof m.content === "string"
+                    ? m.content
+                    : Array.isArray(m.content)
+                      ? (m.content.find((c: any) => c.type === "text") as any)
+                          ?.text || ""
+                      : "";
+                return { role, content };
+              })
+              .filter((m) => m.content !== "" || m.role === "assistant"); // Keep assistant messages even if empty (streaming)
 
-        if (!response.ok || !response.body) {
-          const errText = await response.text();
-          throw new Error(errText || "Failed to fetch from supervisor");
-        }
+            const response = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                messages: apiMessages,
+                config: { language },
+              }),
+              signal: controller.signal,
+            });
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        const aiMessageId = uuidv4();
-        let fullContent = "";
+            if (!response.ok || !response.body) {
+              const errText = await response.text();
+              throw new Error(errText || "Failed to fetch from supervisor");
+            }
 
-        // Add an initial empty AI message
-        setMessages((prev) => [
-          ...prev,
-          { id: aiMessageId, type: "ai", content: "" },
-        ]);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            const aiMessageId = uuidv4();
+            let fullContent = "";
 
-        let accumulated = "";
-        let teamContent = "";
-        let hasStartedTeam = false;
+            // Add an initial empty AI message
+            setMessages((prev) => [
+              ...prev,
+              { id: aiMessageId, type: "ai", content: "" },
+            ]);
 
-        streamLoop: while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+            let accumulated = "";
+            let teamContent = "";
+            let hasStartedTeam = false;
 
-          accumulated += decoder.decode(value, { stream: true });
-          const blocks = accumulated.split("\n\n");
-          accumulated = blocks.pop() || "";
+            streamLoop: while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
 
-          for (const block of blocks) {
-            const lines = block.split("\n");
-            for (const line of lines) {
-              if (line.trim().startsWith("data: ")) {
-                try {
-                  const jsonStr = line.trim().slice(6);
-                  const data = JSON.parse(jsonStr);
-                  if (data.event === "done") break streamLoop;
-                  if (data.node === "custom") {
-                    // Intermediate status updates
-                    setStatus(data.content || "");
-                  } else if (data.node === "customer_service_team") {
-                    // Final response content
-                    if (!hasStartedTeam) {
-                      hasStartedTeam = true;
-                      setStatus(""); // Clear status when response begins
+              accumulated += decoder.decode(value, { stream: true });
+              const blocks = accumulated.split("\n\n");
+              accumulated = blocks.pop() || "";
+
+              for (const block of blocks) {
+                const lines = block.split("\n");
+                for (const line of lines) {
+                  if (line.trim().startsWith("data: ")) {
+                    try {
+                      const jsonStr = line.trim().slice(6);
+                      const data = JSON.parse(jsonStr);
+                      if (data.event === "done") break streamLoop;
+                      if (data.node === "custom") {
+                        // Intermediate status updates
+                        setStatus(data.content || "");
+                      } else if (data.node === "customer_service_team") {
+                        // Final response content
+                        if (!hasStartedTeam) {
+                          hasStartedTeam = true;
+                          setStatus(""); // Clear status when response begins
+                        }
+                        teamContent += data.content || "";
+                        setMessages((prev) =>
+                          prev.map((m) =>
+                            m.id === aiMessageId
+                              ? { ...m, content: teamContent }
+                              : m,
+                          ),
+                        );
+                      } else if (data.error) {
+                        // Handle error event data
+                        throw new Error(data.error);
+                      } else if (!data.node && data.content) {
+                        // Fallback for old/unexpected format
+                        fullContent += data.content;
+                        setMessages((prev) =>
+                          prev.map((m) =>
+                            m.id === aiMessageId
+                              ? { ...m, content: fullContent }
+                              : m,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      console.error("Error parsing SSE data:", e, line);
                     }
-                    teamContent += data.content || "";
-                    setMessages((prev) =>
-                      prev.map((m) =>
-                        m.id === aiMessageId
-                          ? { ...m, content: teamContent }
-                          : m,
-                      ),
-                    );
-                  } else if (data.error) {
-                    // Handle error event data
-                    throw new Error(data.error);
-                  } else if (!data.node && data.content) {
-                    // Fallback for old/unexpected format
-                    fullContent += data.content;
-                    setMessages((prev) =>
-                      prev.map((m) =>
-                        m.id === aiMessageId
-                          ? { ...m, content: fullContent }
-                          : m,
-                      ),
-                    );
                   }
-                } catch (e) {
-                  console.error("Error parsing SSE data:", e, line);
                 }
               }
             }
+          } catch (err: any) {
+            // Ignore abort errors
+            if (
+              err.name === "AbortError" ||
+              err.message?.toLowerCase().includes("abort")
+            ) {
+              return;
+            }
+
+            setError(err);
+            toast.error("Backend Error", {
+              description: err.message,
+            });
+          } finally {
+            if (abortControllerRef.current === controller) {
+              abortControllerRef.current = null;
+              setIsLoading(false);
+            }
           }
-        }
-      } catch (err: any) {
-        setError(err);
-        toast.error("Backend Error", {
-          description: err.message,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    stop: async () => {},
-    getMessagesMetadata: (message: Message) => ({
-      id: message.id || "",
-      firstSeenState: {
+        },
+        stop: async () => {
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+          }
+          setIsLoading(false);
+        },
+        getMessagesMetadata: (message: Message) => ({
+          id: message.id || "",
+          firstSeenState: {
+            checkpoint: null,
+          },
+        }),
+        setBranch: async () => {},
+        interrupt: null,
+        values: {},
+        branches: {},
         checkpoint: null,
-      },
-    }),
-    setBranch: async () => {},
-    interrupt: null,
-    values: {},
-    branches: {},
-    checkpoint: null,
-    next: [],
-    config: {},
-    metadata: {},
-  } as any;
+        next: [],
+        config: {},
+        metadata: {},
+      }) as any,
+    [messages, status, isLoading, error, language, handleSetLanguage],
+  );
 
   return (
     <StreamContext.Provider value={streamValue}>

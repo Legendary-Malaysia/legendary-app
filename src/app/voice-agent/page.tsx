@@ -1,4 +1,3 @@
-// app/page.tsx
 import GeminiAudioChat from "@/app/voice-agent/components/GeminiAudioChat";
 
 export default function Home() {

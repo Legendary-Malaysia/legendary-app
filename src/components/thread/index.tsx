@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { VoiceCallButton } from "@/components/voice-call";
 
 function StickyToBottomContent(props: {
   content: ReactNode;
@@ -267,6 +268,13 @@ export function Thread() {
   const isLoading = stream.isLoading;
 
   const lastError = useRef<string | undefined>(undefined);
+
+  // Stop streaming on unmount
+  useEffect(() => {
+    return () => {
+      stream.stop();
+    };
+  }, []);
 
   useEffect(() => {
     if (!stream.error) {
@@ -530,7 +538,8 @@ export function Thread() {
             <StickyToBottomContent
               className={cn(
                 "absolute inset-0 overflow-y-scroll px-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-track]:bg-transparent",
-                !chatStarted && "mt-[25vh] flex flex-col items-stretch",
+                !chatStarted &&
+                  "flex flex-col items-stretch pt-[10vh] sm:pt-[25vh]",
                 chatStarted && "grid grid-rows-[1fr_auto]",
               )}
               contentClassName="pt-8 pb-16 max-w-3xl mx-auto flex flex-col gap-4 w-full"
@@ -571,7 +580,7 @@ export function Thread() {
                 </>
               }
               footer={
-                <div className="sticky bottom-0 flex flex-col items-center gap-8 bg-white">
+                <div className="sticky bottom-0 flex flex-col items-center gap-4 bg-white sm:gap-8">
                   {!chatStarted && (
                     <div className="flex items-center gap-3">
                       <LegendaryLogo
@@ -617,7 +626,11 @@ export function Thread() {
                             form?.requestSubmit();
                           }
                         }}
-                        placeholder="How can we assist you?"
+                        placeholder={
+                          stream.language === "id"
+                            ? "Temukan kisah di balik Legendary..."
+                            : "Find the story behind Legendary..."
+                        }
                         className="field-sizing-content resize-none border-none bg-transparent p-3.5 pb-0 shadow-none ring-0 outline-none focus:ring-0 focus:outline-none"
                       />
 
@@ -647,16 +660,22 @@ export function Thread() {
                   </div>
 
                   {!chatStarted && (
-                    <QuestionTicker
-                      language={stream.language}
-                      onSelect={(q) => submitMessage(q, [])}
-                    />
+                    <>
+                      <QuestionTicker
+                        language={stream.language}
+                        onSelect={(q) => submitMessage(q, [])}
+                      />
+                      <VoiceCallButton className="bg-black hover:bg-gray-700" />
+                    </>
                   )}
                 </div>
               }
             />
           </StickToBottom>
-          <FooterNote chatStarted={chatStarted} />
+          <FooterNote
+            chatStarted={chatStarted}
+            language={stream.language}
+          />
         </motion.div>
         <div className="relative flex flex-col border-l">
           <div className="absolute inset-0 flex min-w-[30vw] flex-col">
@@ -677,7 +696,13 @@ export function Thread() {
   );
 }
 
-function FooterNote({ chatStarted }: { chatStarted: boolean }) {
+function FooterNote({
+  chatStarted,
+  language,
+}: {
+  chatStarted: boolean;
+  language: "en" | "id";
+}) {
   return (
     <div className="flex flex-col items-center pb-4">
       {!chatStarted && (
@@ -718,7 +743,9 @@ function FooterNote({ chatStarted }: { chatStarted: boolean }) {
       {chatStarted && (
         <div className="flex items-center">
           <p className="text-muted-foreground text-xs">
-            AI can make mistakes. Please verify the information.
+            {language === "id"
+              ? "AI dapat membuat kesalahan. Pastikan untuk memverifikasi informasi."
+              : "AI can make mistakes. Please verify the information."}
           </p>
         </div>
       )}
