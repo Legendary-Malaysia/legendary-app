@@ -269,6 +269,14 @@ export function Thread() {
 
   const lastError = useRef<string | undefined>(undefined);
 
+  // Stop streaming on unmount
+  useEffect(() => {
+    return () => {
+      stream.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (!stream.error) {
       lastError.current = undefined;
@@ -619,7 +627,11 @@ export function Thread() {
                             form?.requestSubmit();
                           }
                         }}
-                        placeholder="How can we assist you?"
+                        placeholder={
+                          stream.language === "id"
+                            ? "Temukan kisah di balik Legendary..."
+                            : "Find the story behind Legendary..."
+                        }
                         className="field-sizing-content resize-none border-none bg-transparent p-3.5 pb-0 shadow-none ring-0 outline-none focus:ring-0 focus:outline-none"
                       />
 
@@ -661,7 +673,7 @@ export function Thread() {
               }
             />
           </StickToBottom>
-          <FooterNote chatStarted={chatStarted} />
+          <FooterNote chatStarted={chatStarted} language={stream.language} />
         </motion.div>
         <div className="relative flex flex-col border-l">
           <div className="absolute inset-0 flex min-w-[30vw] flex-col">
@@ -682,7 +694,7 @@ export function Thread() {
   );
 }
 
-function FooterNote({ chatStarted }: { chatStarted: boolean }) {
+function FooterNote({ chatStarted, language }: { chatStarted: boolean, language: string }) {
   return (
     <div className="flex flex-col items-center pb-4">
       {!chatStarted && (
@@ -723,7 +735,9 @@ function FooterNote({ chatStarted }: { chatStarted: boolean }) {
       {chatStarted && (
         <div className="flex items-center">
           <p className="text-muted-foreground text-xs">
-            AI can make mistakes. Please verify the information.
+            {language === "id"
+              ? "AI dapat membuat kesalahan. Pastikan untuk memverifikasi informasi."
+              : "AI can make mistakes. Please verify the information."}
           </p>
         </div>
       )}
