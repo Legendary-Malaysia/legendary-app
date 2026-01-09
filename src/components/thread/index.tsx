@@ -702,7 +702,7 @@ function FooterNote({
   language,
 }: {
   chatStarted: boolean;
-  language: string;
+  language: "en" | "id";
 }) {
   return (
     <div className="flex flex-col items-center pb-4">

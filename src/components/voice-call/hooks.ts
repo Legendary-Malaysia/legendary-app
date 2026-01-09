@@ -253,7 +253,11 @@ export function useAudioRecorder(onAudioData: (data: string) => void) {
       };
 
       source.connect(processor);
-      processor.connect(audioContextRef.current.destination);
+
+      const zeroGain = audioContextRef.current.createGain();
+      zeroGain.gain.value = 0;
+      processor.connect(zeroGain);
+      zeroGain.connect(audioContextRef.current.destination);
 
       setIsRecording(true);
       return true;
@@ -291,25 +295,20 @@ export function useAudioRecorder(onAudioData: (data: string) => void) {
   return { startRecording, stopRecording, isRecording };
 }
 
+// Queue management constants
+const MAX_QUEUE_SIZE = 10; // Maximum chunks in queue before dropping old frames
+const SCHEDULE_AHEAD_TIME = 0.1; // Schedule audio 100ms ahead for seamless playback
+
 export function useAudioPlayer() {
   const audioQueueRef = useRef<ArrayBuffer[]>([]);
   const isPlayingRef = useRef(false);
   const playbackContextRef = useRef<AudioContext | null>(null);
-  const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const activeSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const shouldStopRef = useRef(false);
+  const nextStartTimeRef = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const playQueue = useCallback(async () => {
-    if (
-      isPlayingRef.current ||
-      audioQueueRef.current.length === 0 ||
-      shouldStopRef.current
-    )
-      return;
-
-    isPlayingRef.current = true;
-    setIsPlaying(true);
-
+  const getAudioContext = useCallback(async () => {
     if (
       !playbackContextRef.current ||
       playbackContextRef.current.state === "closed"
@@ -319,61 +318,133 @@ export function useAudioPlayer() {
       });
     }
 
-    const audioContext = playbackContextRef.current;
-
-    try {
-      while (audioQueueRef.current.length > 0 && !shouldStopRef.current) {
-        const audioData = audioQueueRef.current.shift()!;
-        const audioBuffer = await pcmToAudioBuffer(
-          audioContext,
-          audioData,
-          CONFIG.RECEIVE_SAMPLE_RATE,
-        );
-        await playAudioBuffer(audioContext, audioBuffer, currentSourceRef);
-      }
-    } catch (error) {
-      console.error("Error playing audio:", error);
+    // Handle suspended state (browser power-saving)
+    if (playbackContextRef.current.state === "suspended") {
+      await playbackContextRef.current.resume();
     }
 
-    isPlayingRef.current = false;
-    setIsPlaying(false);
+    return playbackContextRef.current;
   }, []);
+
+  const scheduleAudioChunk = useCallback(
+    async (audioContext: AudioContext, audioData: ArrayBuffer) => {
+      const audioBuffer = await pcmToAudioBuffer(
+        audioContext,
+        audioData,
+        CONFIG.RECEIVE_SAMPLE_RATE,
+      );
+
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioContext.destination);
+
+      // Track active source for cleanup
+      activeSourcesRef.current.add(source);
+
+      // Calculate precise start time - schedule ahead to avoid gaps
+      const currentTime = audioContext.currentTime;
+      const startTime = Math.max(
+        nextStartTimeRef.current,
+        currentTime + SCHEDULE_AHEAD_TIME,
+      );
+
+      // Update next start time for seamless chaining
+      nextStartTimeRef.current = startTime + audioBuffer.duration;
+
+      source.onended = () => {
+        activeSourcesRef.current.delete(source);
+        // Check if all audio has finished playing
+        if (
+          activeSourcesRef.current.size === 0 &&
+          audioQueueRef.current.length === 0
+        ) {
+          isPlayingRef.current = false;
+          setIsPlaying(false);
+        }
+      };
+
+      source.start(startTime);
+    },
+    [],
+  );
+
+  const processQueue = useCallback(async () => {
+    if (isPlayingRef.current || shouldStopRef.current) return;
+    if (audioQueueRef.current.length === 0) return;
+
+    isPlayingRef.current = true;
+    setIsPlaying(true);
+
+    try {
+      const audioContext = await getAudioContext();
+
+      // Process all queued chunks with schedule-ahead
+      while (audioQueueRef.current.length > 0 && !shouldStopRef.current) {
+        const audioData = audioQueueRef.current.shift()!;
+        await scheduleAudioChunk(audioContext, audioData);
+      }
+    } catch (error) {
+      console.error("Error processing audio queue:", error);
+      isPlayingRef.current = false;
+      setIsPlaying(false);
+    }
+  }, [getAudioContext, scheduleAudioChunk]);
 
   const enqueueAudio = useCallback(
     (audioData: ArrayBuffer) => {
       if (shouldStopRef.current) {
         console.log("Resuming audio playback for new response");
         shouldStopRef.current = false;
+        nextStartTimeRef.current = 0; // Reset scheduling time
+      }
+
+      // Queue management: drop oldest frames if queue is too large
+      while (audioQueueRef.current.length >= MAX_QUEUE_SIZE) {
+        audioQueueRef.current.shift();
+        console.warn("Dropping audio frame to reduce latency");
       }
 
       audioQueueRef.current.push(audioData);
+
+      // Start processing if not already playing
       if (!isPlayingRef.current && !shouldStopRef.current) {
-        playQueue();
+        processQueue();
+      } else if (isPlayingRef.current) {
+        // If already playing, schedule the new chunk immediately
+        getAudioContext().then((ctx) => {
+          if (!shouldStopRef.current && audioQueueRef.current.length > 0) {
+            const data = audioQueueRef.current.shift()!;
+            scheduleAudioChunk(ctx, data);
+          }
+        });
       }
     },
-    [playQueue],
+    [processQueue, getAudioContext, scheduleAudioChunk],
   );
 
   const stopAudio = useCallback(() => {
     shouldStopRef.current = true;
 
-    if (currentSourceRef.current) {
+    // Stop all active sources
+    activeSourcesRef.current.forEach((source) => {
       try {
-        currentSourceRef.current.stop();
-        currentSourceRef.current.disconnect();
+        source.stop();
+        source.disconnect();
       } catch {
         // Already stopped or disconnected
       }
-      currentSourceRef.current = null;
-    }
+    });
+    activeSourcesRef.current.clear();
 
     audioQueueRef.current = [];
+    nextStartTimeRef.current = 0;
     isPlayingRef.current = false;
     setIsPlaying(false);
   }, []);
 
   const resumeAudio = useCallback(() => {
     shouldStopRef.current = false;
+    nextStartTimeRef.current = 0;
   }, []);
 
   useEffect(() => {
