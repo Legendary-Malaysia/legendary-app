@@ -131,6 +131,11 @@ export function useWebSocket(
     try {
       setStatus("connecting");
       const baseUrl = wsUrl || CONFIG.WS_URL;
+      if (!baseUrl) {
+        console.error("WebSocket URL is not configured");
+        setStatus("error");
+        return;
+      }
       const url = `${baseUrl}/ws/audio?enable_search=${enableSearch}&enable_functions=${enableFunctions}`;
       const ws = new WebSocket(url);
 
