@@ -1,6 +1,7 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import Link from "next/link";
 import { LayoutDashboard, Settings, User, LogOut } from "lucide-react";
+import { LegendaryLogo } from "@/components/icons/legendary";
 
 export default async function AdminLayout({
   children,
@@ -16,10 +17,11 @@ export default async function AdminLayout({
         <div className="flex h-full flex-col">
           {/* Logo/Brand */}
           <div className="flex h-16 items-center gap-3 border-b border-slate-700/50 px-6">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
-              <span className="text-sm font-bold text-white">L</span>
-            </div>
-            <span className="text-lg font-semibold text-white">Admin</span>
+            <LegendaryLogo
+              width={107}
+              height={16}
+              darkMode={true}
+            />
           </div>
 
           {/* Navigation */}
