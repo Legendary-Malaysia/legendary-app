@@ -28,6 +28,9 @@ export type SupportTicket = {
   updated_at: string;
   resolved_at: string | null;
   closed_at: string | null;
+  profiles?: {
+    email: string | null;
+  } | null;
 };
 
 export async function getTickets(): Promise<SupportTicket[]> {
@@ -36,7 +39,7 @@ export async function getTickets(): Promise<SupportTicket[]> {
 
   const { data, error } = await supabase
     .from("support_tickets")
-    .select("*")
+    .select("*, profiles:created_by(email)")
     .eq("created_by", user.id)
     .order("created_at", { ascending: false });
 
@@ -54,7 +57,7 @@ export async function getTicket(id: string): Promise<SupportTicket | null> {
 
   const { data, error } = await supabase
     .from("support_tickets")
-    .select("*")
+    .select("*, profiles:created_by(email)")
     .eq("id", id)
     .eq("created_by", user.id)
     .single();

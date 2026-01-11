@@ -162,7 +162,9 @@ export default async function SupportPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-slate-300">
-                        {ticket.created_by || "Unknown"}
+                        {ticket.profiles?.email ||
+                          ticket.created_by ||
+                          "Unknown"}
                       </td>
                       <td className="px-6 py-4">
                         {formatDate(ticket.created_at)}
