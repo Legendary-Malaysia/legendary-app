@@ -7,7 +7,7 @@ export function LegendaryLogo({
 }: {
   width: number;
   height: number;
-  darkMode: boolean;
+  darkMode?: boolean;
 }) {
   return (
     <Image

@@ -1,6 +1,6 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import Link from "next/link";
-import { LayoutDashboard, Settings, User, LogOut } from "lucide-react";
+import { LayoutDashboard, Settings, User, LogOut, Ticket } from "lucide-react";
 import { LegendaryLogo } from "@/components/icons/legendary";
 
 export default async function AdminLayout({
@@ -32,6 +32,13 @@ export default async function AdminLayout({
             >
               <LayoutDashboard className="h-5 w-5" />
               <span>Dashboard</span>
+            </Link>
+            <Link
+              href="/admin/support"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 transition-all hover:bg-slate-800 hover:text-white"
+            >
+              <Ticket className="h-5 w-5" />
+              <span>Support Tickets</span>
             </Link>
             <Link
               href="/admin/settings"
