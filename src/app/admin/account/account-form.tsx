@@ -14,21 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  Loader2,
-  User as UserIcon,
-  Mail,
-  Globe,
-  AtSign,
-  LogOut,
-  ArrowLeft,
-} from "lucide-react";
-import Link from "next/link";
+import { Loader2, User as UserIcon, Mail, LogOut } from "lucide-react";
 
 interface Profile {
   full_name: string | null;
-  username: string | null;
-  website: string | null;
   avatar_url: string | null;
 }
 
@@ -42,16 +31,12 @@ export default function AccountForm({
   const supabase = createClient();
   const [isPending, startTransition] = useTransition();
   const [fullname, setFullname] = useState(initialProfile?.full_name ?? "");
-  const [username, setUsername] = useState(initialProfile?.username ?? "");
-  const [website, setWebsite] = useState(initialProfile?.website ?? "");
 
   function handleUpdateProfile() {
     startTransition(async () => {
       const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: fullname || null,
-        username: username || null,
-        website: website || null,
         updated_at: new Date().toISOString(),
       });
 
@@ -123,48 +108,6 @@ export default function AccountForm({
             </div>
           </div>
 
-          {/* Username */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="username"
-              className="text-slate-300"
-            >
-              Username
-            </Label>
-            <div className="relative">
-              <AtSign className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="johndoe"
-                className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-500 focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
-          {/* Website */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="website"
-              className="text-slate-300"
-            >
-              Website
-            </Label>
-            <div className="relative">
-              <Globe className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
-              <Input
-                id="website"
-                type="url"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                placeholder="https://example.com"
-                className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-500 focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
           {/* Update Button */}
           <Button
             onClick={handleUpdateProfile}
@@ -183,13 +126,6 @@ export default function AccountForm({
 
           {/* Actions */}
           <div className="flex items-center justify-between border-t border-slate-700/50 pt-4">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Link>
             <form
               action="/auth/signout"
               method="post"

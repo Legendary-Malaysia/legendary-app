@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, ArrowRight } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, User } from "lucide-react";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -66,6 +66,27 @@ export default function LoginPage() {
             action={handleSubmit}
             className="space-y-4"
           >
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="fullName"
+                  className="text-slate-300"
+                >
+                  Full Name
+                </Label>
+                <div className="relative">
+                  <User className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    placeholder="John Doe"
+                    required
+                    className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-500 focus:border-indigo-500 focus:ring-indigo-500/20"
+                  />
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label
                 htmlFor="email"

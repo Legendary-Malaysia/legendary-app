@@ -11,7 +11,7 @@ export default async function Account() {
   // Fetch profile data
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, username, website, avatar_url")
+    .select("full_name, avatar_url")
     .eq("id", user.id)
     .single();
 

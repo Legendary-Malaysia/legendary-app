@@ -5,17 +5,39 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
-const authSchema = z.object({
+const loginSchema = z.object({
   email: z.email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
+
+const signupSchema = loginSchema.extend({
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+});
+
+async function createProfile(
+  supabase: any,
+  userId: string,
+  fullName: string,
+  email: string,
+) {
+  const { error } = await supabase.from("profiles").upsert({
+    id: userId,
+    full_name: fullName,
+    email: email,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    console.error("Profile creation error:", error);
+  }
+}
 
 export async function login(
   formData: FormData,
 ): Promise<{ error?: string; message?: string } | void> {
   const supabase = await createClient();
 
-  const result = authSchema.safeParse({
+  const result = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
@@ -40,9 +62,10 @@ export async function signup(
 ): Promise<{ error?: string; message?: string } | void> {
   const supabase = await createClient();
 
-  const result = authSchema.safeParse({
+  const result = signupSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    fullName: formData.get("fullName"),
   });
 
   if (!result.success) {
@@ -53,6 +76,9 @@ export async function signup(
     ...result.data,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/confirm`,
+      data: {
+        full_name: result.data.fullName,
+      },
     },
   });
 
@@ -80,6 +106,16 @@ export async function signup(
 
   // If no session, email confirmation is required
   if (!data.session) {
+    // Create profile record if it doesn't exist
+    if (data.user) {
+      await createProfile(
+        supabase,
+        data.user.id,
+        result.data.fullName,
+        result.data.email,
+      );
+    }
+
     console.log("Email confirmation is required");
     return {
       message: "Check your email to confirm your account before signing in.",
@@ -87,6 +123,15 @@ export async function signup(
   }
 
   // User is signed up and logged in directly (no email confirmation required)
+  // Create profile record
+  if (data.user) {
+    await createProfile(
+      supabase,
+      data.user.id,
+      result.data.fullName,
+      result.data.email,
+    );
+  }
   console.log("User is signed up and logged in directly");
   revalidatePath("/", "layout");
   redirect("/admin/dashboard");
