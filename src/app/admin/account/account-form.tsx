@@ -24,9 +24,11 @@ interface Profile {
 export default function AccountForm({
   user,
   profile: initialProfile,
+  role,
 }: {
   user: User;
   profile: Profile | null;
+  role: string | null;
 }) {
   const supabase = createClient();
   const [isPending, startTransition] = useTransition();
@@ -81,6 +83,26 @@ export default function AccountForm({
                 id="email"
                 type="email"
                 value={user.email ?? ""}
+                disabled
+                className="border-slate-700 bg-slate-800/30 pl-10 text-slate-400"
+              />
+            </div>
+          </div>
+
+          {/* Role (read-only) */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="role"
+              className="text-slate-300"
+            >
+              Role
+            </Label>
+            <div className="relative">
+              <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <Input
+                id="role"
+                type="text"
+                value={role ?? ""}
                 disabled
                 className="border-slate-700 bg-slate-800/30 pl-10 text-slate-400"
               />

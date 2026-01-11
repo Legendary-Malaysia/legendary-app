@@ -9,7 +9,9 @@ import type { User } from "@supabase/supabase-js";
  * If no user is authenticated, redirects to login page.
  * Use this in server components and server actions that require auth.
  */
-export async function requireAuth(redirectTo?: string): Promise<User> {
+export async function requireAuth(
+  redirectTo?: string,
+): Promise<{ user: User; role: string | null }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,7 +24,13 @@ export async function requireAuth(redirectTo?: string): Promise<User> {
     redirect(loginPath);
   }
 
-  return user;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  return { user, role: profile?.role ?? null };
 }
 
 /**

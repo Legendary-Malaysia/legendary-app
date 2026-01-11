@@ -34,14 +34,21 @@ export type SupportTicket = {
 };
 
 export async function getTickets(): Promise<SupportTicket[]> {
-  const user = await requireAuth("/admin/support");
+  const { user, role } = await requireAuth("/admin/support");
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const isAdmin = role === "admin";
+
+  let query = supabase
     .from("support_tickets")
     .select("*, profiles:created_by(email)")
-    .eq("created_by", user.id)
     .order("created_at", { ascending: false });
+
+  if (!isAdmin) {
+    query = query.eq("created_by", user.id);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching tickets:", error);
@@ -52,15 +59,21 @@ export async function getTickets(): Promise<SupportTicket[]> {
 }
 
 export async function getTicket(id: string): Promise<SupportTicket | null> {
-  const user = await requireAuth(`/admin/support/${id}`);
+  const { user, role } = await requireAuth(`/admin/support/${id}`);
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const isAdmin = role === "admin";
+
+  let query = supabase
     .from("support_tickets")
     .select("*, profiles:created_by(email)")
-    .eq("id", id)
-    .eq("created_by", user.id)
-    .single();
+    .eq("id", id);
+
+  if (!isAdmin) {
+    query = query.eq("created_by", user.id);
+  }
+
+  const { data, error } = await query.single();
 
   if (error) {
     console.error("Error fetching ticket:", error);
@@ -79,7 +92,7 @@ export async function createTicket(
   prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const user = await requireAuth("/admin/support");
+  const { user } = await requireAuth("/admin/support");
   const supabase = await createClient();
 
   const subject = formData.get("subject") as string;
@@ -127,8 +140,10 @@ export async function updateTicket(
   prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const user = await requireAuth(`/admin/support/${id}`);
+  const { user, role } = await requireAuth(`/admin/support/${id}`);
   const supabase = await createClient();
+
+  const isAdmin = role === "admin";
 
   const subject = formData.get("subject") as string;
   const description = formData.get("description") as string;
@@ -170,11 +185,13 @@ export async function updateTicket(
     updates.closed_at = new Date().toISOString();
   }
 
-  const { error } = await supabase
-    .from("support_tickets")
-    .update(updates)
-    .eq("id", id)
-    .eq("created_by", user.id);
+  let query = supabase.from("support_tickets").update(updates).eq("id", id);
+
+  if (!isAdmin) {
+    query = query.eq("created_by", user.id);
+  }
+
+  const { error } = await query;
 
   if (error) {
     console.error("Error updating ticket:", error);
