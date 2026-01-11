@@ -97,6 +97,7 @@ export default async function SupportPage() {
                   <th className="px-6 py-3 font-medium">Customer</th>
                   <th className="px-6 py-3 font-medium">Status</th>
                   <th className="px-6 py-3 font-medium">Priority</th>
+                  <th className="px-6 py-3 font-medium">Created By</th>
                   <th className="px-6 py-3 font-medium">Created</th>
                   <th className="px-6 py-3 font-medium">Action</th>
                 </tr>
@@ -105,7 +106,7 @@ export default async function SupportPage() {
                 {tickets.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-6 py-12 text-center"
                     >
                       <div className="flex flex-col items-center justify-center gap-2">
@@ -159,6 +160,9 @@ export default async function SupportPage() {
                           {ticket.priority.charAt(0).toUpperCase() +
                             ticket.priority.slice(1)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-slate-300">
+                        {ticket.created_by || "Unknown"}
                       </td>
                       <td className="px-6 py-4">
                         {formatDate(ticket.created_at)}
