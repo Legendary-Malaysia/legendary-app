@@ -1,63 +1,71 @@
-'use client'
+"use client";
 
-import { useState, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { type User } from '@supabase/supabase-js'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
-import { Loader2, User as UserIcon, Mail, Globe, AtSign, LogOut, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
+import { useState, useTransition } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { type User } from "@supabase/supabase-js";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  Loader2,
+  User as UserIcon,
+  Mail,
+  Globe,
+  AtSign,
+  LogOut,
+  ArrowLeft,
+} from "lucide-react";
+import Link from "next/link";
 
 interface Profile {
-  full_name: string | null
-  username: string | null
-  website: string | null
-  avatar_url: string | null
+  full_name: string | null;
+  username: string | null;
+  website: string | null;
+  avatar_url: string | null;
 }
 
-export default function AccountForm({ 
-  user, 
-  profile: initialProfile 
-}: { 
-  user: User
-  profile: Profile | null
+export default function AccountForm({
+  user,
+  profile: initialProfile,
+}: {
+  user: User;
+  profile: Profile | null;
 }) {
-  const supabase = createClient()
-  const [isPending, startTransition] = useTransition()
-  const [fullname, setFullname] = useState(initialProfile?.full_name ?? '')
-  const [username, setUsername] = useState(initialProfile?.username ?? '')
-  const [website, setWebsite] = useState(initialProfile?.website ?? '')
+  const supabase = createClient();
+  const [isPending, startTransition] = useTransition();
+  const [fullname, setFullname] = useState(initialProfile?.full_name ?? "");
+  const [username, setUsername] = useState(initialProfile?.username ?? "");
+  const [website, setWebsite] = useState(initialProfile?.website ?? "");
 
   function handleUpdateProfile() {
     startTransition(async () => {
-      const { error } = await supabase.from('profiles').upsert({
+      const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: fullname || null,
         username: username || null,
         website: website || null,
         updated_at: new Date().toISOString(),
-      })
+      });
 
       if (error) {
-        toast.error('Failed to update profile')
-        console.error(error)
+        toast.error("Failed to update profile");
+        console.error(error);
       } else {
-        toast.success('Profile updated successfully!')
+        toast.success("Profile updated successfully!");
       }
-    })
+    });
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
-      {/* Background decoration */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-1/4 -top-1/4 h-1/2 w-1/2 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full bg-purple-500/20 blur-3xl" />
-      </div>
-
+    <div className="flex items-center justify-center">
       <Card className="relative w-full max-w-md border-slate-700/50 bg-slate-900/80 backdrop-blur-xl">
         <CardHeader className="text-center">
           {/* Avatar */}
@@ -66,7 +74,9 @@ export default function AccountForm({
               {user.email?.charAt(0).toUpperCase()}
             </span>
           </div>
-          <CardTitle className="text-2xl font-bold text-white">Your Account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-white">
+            Your Account
+          </CardTitle>
           <CardDescription className="text-slate-400">
             Manage your profile information
           </CardDescription>
@@ -74,15 +84,18 @@ export default function AccountForm({
         <CardContent className="space-y-6">
           {/* Email (read-only) */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-slate-300">
+            <Label
+              htmlFor="email"
+              className="text-slate-300"
+            >
               Email
             </Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <Mail className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <Input
                 id="email"
                 type="email"
-                value={user.email ?? ''}
+                value={user.email ?? ""}
                 disabled
                 className="border-slate-700 bg-slate-800/30 pl-10 text-slate-400"
               />
@@ -91,11 +104,14 @@ export default function AccountForm({
 
           {/* Full Name */}
           <div className="space-y-2">
-            <Label htmlFor="fullName" className="text-slate-300">
+            <Label
+              htmlFor="fullName"
+              className="text-slate-300"
+            >
               Full Name
             </Label>
             <div className="relative">
-              <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <UserIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <Input
                 id="fullName"
                 type="text"
@@ -109,11 +125,14 @@ export default function AccountForm({
 
           {/* Username */}
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-slate-300">
+            <Label
+              htmlFor="username"
+              className="text-slate-300"
+            >
               Username
             </Label>
             <div className="relative">
-              <AtSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <AtSign className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <Input
                 id="username"
                 type="text"
@@ -127,11 +146,14 @@ export default function AccountForm({
 
           {/* Website */}
           <div className="space-y-2">
-            <Label htmlFor="website" className="text-slate-300">
+            <Label
+              htmlFor="website"
+              className="text-slate-300"
+            >
               Website
             </Label>
             <div className="relative">
-              <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <Globe className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <Input
                 id="website"
                 type="url"
@@ -155,7 +177,7 @@ export default function AccountForm({
                 Updating...
               </>
             ) : (
-              'Update Profile'
+              "Update Profile"
             )}
           </Button>
 
@@ -168,7 +190,10 @@ export default function AccountForm({
               <ArrowLeft className="h-4 w-4" />
               Back to Home
             </Link>
-            <form action="/auth/signout" method="post">
+            <form
+              action="/auth/signout"
+              method="post"
+            >
               <button
                 type="submit"
                 className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-red-400"
@@ -181,5 +206,5 @@ export default function AccountForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

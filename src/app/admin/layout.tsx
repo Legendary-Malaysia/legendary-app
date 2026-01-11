@@ -1,13 +1,13 @@
-import { requireAuth } from '@/lib/supabase/auth'
-import Link from 'next/link'
-import { LayoutDashboard, Settings, Users, LogOut } from 'lucide-react'
+import { requireAuth } from "@/lib/supabase/auth";
+import Link from "next/link";
+import { LayoutDashboard, Settings, User, LogOut } from "lucide-react";
 
 export default async function AdminLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const user = await requireAuth()
+  const user = await requireAuth();
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -32,18 +32,18 @@ export default async function AdminLayout({
               <span>Dashboard</span>
             </Link>
             <Link
-              href="/admin/users"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 transition-all hover:bg-slate-800 hover:text-white"
-            >
-              <Users className="h-5 w-5" />
-              <span>Users</span>
-            </Link>
-            <Link
               href="/admin/settings"
               className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 transition-all hover:bg-slate-800 hover:text-white"
             >
               <Settings className="h-5 w-5" />
               <span>Settings</span>
+            </Link>
+            <Link
+              href="/admin/account"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 transition-all hover:bg-slate-800 hover:text-white"
+            >
+              <User className="h-5 w-5" />
+              <span>Account</span>
             </Link>
           </nav>
 
@@ -56,11 +56,16 @@ export default async function AdminLayout({
                 </span>
               </div>
               <div className="flex-1 overflow-hidden">
-                <p className="truncate text-sm font-medium text-white">{user.email}</p>
+                <p className="truncate text-sm font-medium text-white">
+                  {user.email}
+                </p>
                 <p className="text-xs text-slate-400">Administrator</p>
               </div>
             </div>
-            <form action="/auth/signout" method="post">
+            <form
+              action="/auth/signout"
+              method="post"
+            >
               <button
                 type="submit"
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-slate-400 transition-all hover:bg-red-500/10 hover:text-red-400"
@@ -78,5 +83,5 @@ export default async function AdminLayout({
         <div className="p-8">{children}</div>
       </main>
     </div>
-  )
+  );
 }

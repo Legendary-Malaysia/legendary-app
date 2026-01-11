@@ -1,20 +1,32 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Activity, TrendingUp, Clock } from 'lucide-react'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Users, Activity, TrendingUp, Clock } from "lucide-react";
 
 export default function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-white">Dashboard</h1>
-        <p className="text-slate-400">Welcome back! Here&apos;s an overview of your application.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Dashboard
+        </h1>
+        <p className="text-slate-400">
+          Welcome back! Here&apos;s an overview of your application.
+        </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-300">
+              Total Users
+            </CardTitle>
             <Users className="h-4 w-4 text-indigo-400" />
           </CardHeader>
           <CardContent>
@@ -25,7 +37,9 @@ export default function AdminDashboard() {
 
         <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Active Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-300">
+              Active Sessions
+            </CardTitle>
             <Activity className="h-4 w-4 text-green-400" />
           </CardHeader>
           <CardContent>
@@ -36,7 +50,9 @@ export default function AdminDashboard() {
 
         <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Growth Rate</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-300">
+              Growth Rate
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-purple-400" />
           </CardHeader>
           <CardContent>
@@ -47,7 +63,9 @@ export default function AdminDashboard() {
 
         <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-300">Avg. Session</CardTitle>
+            <CardTitle className="text-sm font-medium text-slate-300">
+              Avg. Session
+            </CardTitle>
             <Clock className="h-4 w-4 text-amber-400" />
           </CardHeader>
           <CardContent>
@@ -68,10 +86,26 @@ export default function AdminDashboard() {
         <CardContent>
           <div className="space-y-4">
             {[
-              { action: 'New user registered', time: '2 minutes ago', icon: Users },
-              { action: 'User updated profile', time: '15 minutes ago', icon: Activity },
-              { action: 'New conversation started', time: '1 hour ago', icon: Activity },
-              { action: 'Settings updated', time: '3 hours ago', icon: Activity },
+              {
+                action: "New user registered",
+                time: "2 minutes ago",
+                icon: Users,
+              },
+              {
+                action: "User updated profile",
+                time: "15 minutes ago",
+                icon: Activity,
+              },
+              {
+                action: "New conversation started",
+                time: "1 hour ago",
+                icon: Activity,
+              },
+              {
+                action: "Settings updated",
+                time: "3 hours ago",
+                icon: Activity,
+              },
             ].map((item, index) => (
               <div
                 key={index}
@@ -81,7 +115,9 @@ export default function AdminDashboard() {
                   <item.icon className="h-5 w-5 text-indigo-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-white">{item.action}</p>
+                  <p className="text-sm font-medium text-white">
+                    {item.action}
+                  </p>
                   <p className="text-xs text-slate-400">{item.time}</p>
                 </div>
               </div>
@@ -90,5 +126,5 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

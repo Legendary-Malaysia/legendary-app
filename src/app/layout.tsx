@@ -25,7 +25,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <NuqsAdapter>{children}</NuqsAdapter>
-        <Toaster richColors position="top-right" />
+        <Toaster
+          richColors
+          position="top-right"
+        />
       </body>
     </html>
   );

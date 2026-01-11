@@ -1,8 +1,8 @@
-'use server'
+"use server";
 
-import { redirect } from 'next/navigation'
-import { createClient } from './server'
-import type { User } from '@supabase/supabase-js'
+import { redirect } from "next/navigation";
+import { createClient } from "./server";
+import type { User } from "@supabase/supabase-js";
 
 /**
  * Get the current authenticated user.
@@ -10,17 +10,19 @@ import type { User } from '@supabase/supabase-js'
  * Use this in server components and server actions that require auth.
  */
 export async function requireAuth(redirectTo?: string): Promise<User> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    const loginPath = redirectTo 
+    const loginPath = redirectTo
       ? `/login?redirectTo=${encodeURIComponent(redirectTo)}`
-      : '/login'
-    redirect(loginPath)
+      : "/login";
+    redirect(loginPath);
   }
 
-  return user
+  return user;
 }
 
 /**
@@ -29,7 +31,9 @@ export async function requireAuth(redirectTo?: string): Promise<User> {
  * Use this when you want to optionally show user-specific content.
  */
 export async function getOptionalUser(): Promise<User | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
 }
