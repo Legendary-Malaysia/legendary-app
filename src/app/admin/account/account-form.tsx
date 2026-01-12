@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, User as UserIcon, Mail, LogOut } from "lucide-react";
+import { Loader2, User as UserIcon, Mail, LogOut, Lock } from "lucide-react";
 
 interface Profile {
   full_name: string | null;
@@ -33,6 +33,9 @@ export default function AccountForm({
   const supabase = createClient();
   const [isPending, startTransition] = useTransition();
   const [fullname, setFullname] = useState(initialProfile?.full_name ?? "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   function handleUpdateProfile() {
     startTransition(async () => {
@@ -47,6 +50,46 @@ export default function AccountForm({
         console.error(error);
       } else {
         toast.success("Profile updated successfully!");
+      }
+    });
+  }
+
+  function handleUpdatePassword() {
+    startTransition(async () => {
+      if (newPassword !== confirmPassword) {
+        toast.error("New passwords do not match");
+        return;
+      }
+
+      if (!currentPassword) {
+        toast.error("Please enter your current password");
+        return;
+      }
+
+      // Verify old password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast.error("Incorrect current password");
+        return;
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        toast.error("Failed to update password");
+        console.error(updateError);
+      } else {
+        toast.success("Password updated successfully!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
       }
     });
   }
@@ -134,7 +177,7 @@ export default function AccountForm({
           <Button
             onClick={handleUpdateProfile}
             disabled={isPending}
-            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 font-medium text-white hover:from-indigo-600 hover:to-purple-700"
+            className="mb-6 w-full bg-gradient-to-r from-indigo-500 to-purple-600 font-medium text-white hover:from-indigo-600 hover:to-purple-700"
           >
             {isPending ? (
               <>
@@ -146,20 +189,84 @@ export default function AccountForm({
             )}
           </Button>
 
-          {/* Actions */}
-          <div className="flex items-center justify-between border-t border-slate-700/50 pt-4">
-            <form
-              action="/auth/signout"
-              method="post"
-            >
-              <button
-                type="submit"
-                className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-red-400"
+          <div className="space-y-4 border-t border-slate-700/50 pt-4">
+            <h3 className="text-lg font-medium text-white">Change Password</h3>
+
+            {/* Current Password */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="currentPassword"
+                className="text-slate-300"
               >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </form>
+                Current Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-500 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* New Password */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="newPassword"
+                className="text-slate-300"
+              >
+                New Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-500 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-slate-300"
+              >
+                Confirm New Password
+              </Label>
+              <div className="relative">
+                <Lock className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="border-slate-700 bg-slate-800/50 pl-10 text-white placeholder:text-slate-500 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <Button
+              onClick={handleUpdatePassword}
+              disabled={
+                isPending ||
+                !currentPassword ||
+                !newPassword ||
+                !confirmPassword
+              }
+              className="mb-6 w-full bg-gradient-to-r from-blue-500 to-purple-700 font-medium text-white hover:from-indigo-600 hover:to-purple-700"
+            >
+              Update Password
+            </Button>
           </div>
         </CardContent>
       </Card>
