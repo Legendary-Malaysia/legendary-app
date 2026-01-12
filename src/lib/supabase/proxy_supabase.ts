@@ -41,11 +41,22 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // If accessing /admin exactly
+  if (pathname === "/admin") {
+    if (user) {
+      // Logged in: redirect to dashboard
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    } else {
+      // Not logged in: redirect to login
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
+
   // Check if accessing protected route without auth
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route),
   );
-  if (isProtectedRoute && !user) {
+  if (pathname.startsWith("/admin/") && !user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(loginUrl);
@@ -54,7 +65,7 @@ export async function updateSession(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+    return NextResponse.redirect(new URL("/admin/dashboard", request.url));
   }
 
   return supabaseResponse;
