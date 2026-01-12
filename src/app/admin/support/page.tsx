@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Ticket, Plus, Search, Filter } from "lucide-react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
 
 const STATUS_STYLES = {
   open: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -88,8 +87,8 @@ export default async function SupportPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-slate-700/50">
-            <table className="w-full text-left text-sm text-slate-400">
+          <div className="overflow-x-auto rounded-lg border border-slate-700/50">
+            <table className="w-full min-w-[1000px] text-left text-sm text-slate-400">
               <thead className="bg-slate-900/50 text-xs text-slate-300 uppercase">
                 <tr>
                   <th className="px-6 py-3 font-medium">Ticket ID</th>
