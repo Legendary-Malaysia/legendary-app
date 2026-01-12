@@ -8,7 +8,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = await requireAuth();
+  const { user, role } = await requireAuth();
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -61,7 +61,7 @@ export default async function AdminLayout({
                 <p className="truncate text-sm font-medium text-white">
                   {user.email}
                 </p>
-                <p className="text-xs text-slate-400">Administrator</p>
+                <p className="text-xs text-slate-400">{role}</p>
               </div>
             </div>
             <form

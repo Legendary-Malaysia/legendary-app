@@ -1,10 +1,10 @@
 import type { Message } from "@langchain/langgraph-sdk";
 
 /**
- * Extracts a string summary from a message's content, supporting multimodal (text, image, file, etc.).
- * - If text is present, returns the joined text.
- * - If not, returns a label for the first non-text modality (e.g., 'Image', 'Other').
- * - If unknown, returns 'Multimodal message'.
+ * Extracts text content from a message's content array.
+ * - If content is a string, returns it directly.
+ * - If content is an array, extracts and joins all text parts.
+ * - Returns an empty string if no text parts are found.
  */
 export function getContentString(content: Message["content"]): string {
   if (typeof content === "string") return content;

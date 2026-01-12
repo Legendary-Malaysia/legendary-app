@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function Account() {
   // This will redirect to login if not authenticated
-  // This will redirect to login if not authenticated
   const { user, role } = await requireAuth("/account");
 
   const supabase = await createClient();

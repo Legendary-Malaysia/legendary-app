@@ -29,6 +29,7 @@ async function createProfile(
 
   if (error) {
     console.error("Profile creation error:", error);
+    throw new Error(`Failed to create profile: ${error.message}`);
   }
 }
 
@@ -73,7 +74,8 @@ export async function signup(
   }
 
   const { data, error } = await supabase.auth.signUp({
-    ...result.data,
+    email: result.data.email,
+    password: result.data.password,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/confirm`,
       data: {

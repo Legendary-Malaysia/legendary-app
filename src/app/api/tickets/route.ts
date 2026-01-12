@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   const apiKey = request.headers.get("x-api-key");
 
-  // You should set API_SECRET_KEY in your .env.local file
+  // You should set CSAGENT_API_KEY in your .env.local file
   if (!apiKey || apiKey !== process.env.CSAGENT_API_KEY) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -34,19 +34,24 @@ export async function POST(request: NextRequest) {
     ) {
       return NextResponse.json(
         {
-          error:
-            "Missing required fields. created_by_user_id is required causing a foreign key constraint.",
+          error: "Error: Missing required fields",
         },
         { status: 400 },
       );
     }
 
-    // Initialize Supabase with Service Role Key for admin privileges
-    // Ensure SUPABASE_SERVICE_ROLE_KEY is in your .env.local
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SECRET_KEY!,
-    );
+    // Initialize Supabase with Secret keys
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Missing Supabase configuration");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 },
+      );
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data, error } = await supabase
       .from("support_tickets")

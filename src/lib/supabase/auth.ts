@@ -24,12 +24,15 @@ export async function requireAuth(
     redirect(loginPath);
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
+  if (error) {
+    console.error("Error fetching user profile:", error);
+  }
   return { user, role: profile?.role ?? null };
 }
 
