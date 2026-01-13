@@ -51,17 +51,18 @@ export default async function SupportPage({
     priority = "all",
   } = await searchParams;
 
+  const pageSize = 10;
   const currentPage = Number(page) || 1;
 
   const { tickets, count } = await getTickets({
     page: currentPage,
-    pageSize: 10,
+    pageSize,
     search: query,
     status,
     priority,
   });
 
-  const totalPages = Math.ceil(count / 10);
+  const totalPages = Math.ceil(count / pageSize);
 
   return (
     <div className="space-y-8">
@@ -155,10 +156,8 @@ export default async function SupportPage({
                         </div>
                       </td>
                       <td className="px-6 py-4 text-slate-300">
-                        {
-                          CATEGORIES.find((c) => c.value === ticket.category)
-                            ?.label
-                        }
+                        {CATEGORIES.find((c) => c.value === ticket.category)
+                          ?.label ?? "Unknown"}
                       </td>
                       <td className="px-6 py-4">
                         <span
@@ -166,7 +165,7 @@ export default async function SupportPage({
                             STATUS_STYLES[ticket.status]
                           }`}
                         >
-                          {ticket.status.replace("_", " ")}
+                          {ticket.status.replaceAll("_", " ")}
                         </span>
                       </td>
                       <td className="px-6 py-4">

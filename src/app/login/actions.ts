@@ -109,12 +109,17 @@ export async function signup(
 
   // Create profile record
   if (data.user) {
-    await createProfile(
-      supabase,
-      data.user.id,
-      result.data.fullName,
-      result.data.email,
-    );
+    try {
+      await createProfile(
+        supabase,
+        data.user.id,
+        result.data.fullName,
+        result.data.email,
+      );
+    } catch (error) {
+      console.error("Profile creation error:", error);
+      return { error: "Failed to create profile" };
+    }
   }
 
   // If no session, email confirmation is required
