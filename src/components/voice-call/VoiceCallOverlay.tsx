@@ -210,12 +210,17 @@ export function VoiceCallOverlay({
   // Start recording when connected
   useEffect(() => {
     if (status === "connected" && !isRecording && isOpen) {
-      startRecording().then((success) => {
-        if (success) {
-          setStatus("recording");
-          setCallStartTime(Date.now());
-        }
-      });
+      startRecording()
+        .then((success) => {
+          if (success) {
+            setStatus("recording");
+            setCallStartTime(Date.now());
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to start recording:", error);
+          setStatus("error");
+        });
     }
   }, [status, isOpen, isRecording, startRecording, setStatus]);
 
