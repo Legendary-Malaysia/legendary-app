@@ -1,4 +1,4 @@
-import { getTickets, SupportTicket } from "./actions";
+import { getTickets } from "./actions";
 import {
   Card,
   CardContent,
@@ -7,8 +7,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Ticket, Plus, Search, Filter } from "lucide-react";
+import { Ticket, Plus } from "lucide-react";
 import Link from "next/link";
+import { TicketSearch, TicketFilter, TicketPagination } from "./components";
+import { CATEGORIES } from "./constants";
 
 const STATUS_STYLES = {
   open: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -32,12 +34,34 @@ function formatDate(dateString: string) {
   });
 }
 
-function truncateId(id: string) {
-  return id.slice(0, 8);
-}
+export default async function SupportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    search?: string;
+    page?: string;
+    status?: string;
+    priority?: string;
+  }>;
+}) {
+  const {
+    search: query = "",
+    page = "1",
+    status = "all",
+    priority = "all",
+  } = await searchParams;
 
-export default async function SupportPage() {
-  const tickets = await getTickets();
+  const currentPage = Number(page) || 1;
+
+  const { tickets, count } = await getTickets({
+    page: currentPage,
+    pageSize: 10,
+    search: query,
+    status,
+    priority,
+  });
+
+  const totalPages = Math.ceil(count / 10);
 
   return (
     <div className="space-y-8">
@@ -71,18 +95,10 @@ export default async function SupportPage() {
                 Manage and track all support tickets
               </CardDescription>
             </div>
-            {/* Placeholder for future search/filter implementation */}
-            <div className="flex gap-2">
-              {/* <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-                <Input
-                  placeholder="Search tickets..."
-                  className="w-[200px] border-slate-700 bg-slate-900/50 pl-9 text-white placeholder:text-slate-500 hover:bg-slate-900/70 focus:bg-slate-900"
-                />
-              </div>
-              <Button variant="outline" size="icon" className="border-slate-700 bg-slate-900/50 text-slate-400 hover:bg-slate-800 hover:text-white">
-                <Filter className="h-4 w-4" />
-              </Button> */}
+            {/* Search and Filter */}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <TicketSearch />
+              <TicketFilter />
             </div>
           </div>
         </CardHeader>
@@ -91,9 +107,9 @@ export default async function SupportPage() {
             <table className="w-full min-w-[1000px] text-left text-sm text-slate-400">
               <thead className="bg-slate-900/50 text-xs text-slate-300 uppercase">
                 <tr>
-                  <th className="px-6 py-3 font-medium">Ticket ID</th>
                   <th className="px-6 py-3 font-medium">Subject</th>
                   <th className="px-6 py-3 font-medium">Customer</th>
+                  <th className="px-6 py-3 font-medium">Category</th>
                   <th className="px-6 py-3 font-medium">Status</th>
                   <th className="px-6 py-3 font-medium">Priority</th>
                   <th className="px-6 py-3 font-medium">Created By</th>
@@ -125,9 +141,6 @@ export default async function SupportPage() {
                       key={ticket.id}
                       className="group transition-colors hover:bg-slate-700/20"
                     >
-                      <td className="px-6 py-4 font-mono text-xs text-slate-500">
-                        #{truncateId(ticket.id)}
-                      </td>
                       <td className="px-6 py-4 font-medium text-white">
                         {ticket.subject}
                       </td>
@@ -140,6 +153,12 @@ export default async function SupportPage() {
                             {ticket.customer_email}
                           </span>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-300">
+                        {
+                          CATEGORIES.find((c) => c.value === ticket.category)
+                            ?.label
+                        }
                       </td>
                       <td className="px-6 py-4">
                         <span
@@ -184,6 +203,14 @@ export default async function SupportPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {count > 0 && (
+        <TicketPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+        />
+      )}
     </div>
   );
 }

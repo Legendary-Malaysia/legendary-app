@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,30 +20,7 @@ import {
   updateTicket,
   ActionState,
 } from "./actions";
-
-const CATEGORIES = [
-  { value: "bug", label: "Bug Report" },
-  { value: "feature_request", label: "Feature Request" },
-  { value: "billing", label: "Billing" },
-  { value: "technical_support", label: "Technical Support" },
-  { value: "account_issue", label: "Account Issue" },
-  { value: "general_inquiry", label: "General Inquiry" },
-  { value: "other", label: "Other" },
-];
-
-const PRIORITIES = [
-  { value: "low", label: "Low", color: "text-slate-400" },
-  { value: "medium", label: "Medium", color: "text-blue-400" },
-  { value: "high", label: "High", color: "text-amber-400" },
-  { value: "urgent", label: "Urgent", color: "text-red-400" },
-];
-
-const STATUSES = [
-  { value: "open", label: "Open" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "resolved", label: "Resolved" },
-  { value: "closed", label: "Closed" },
-];
+import { CATEGORIES, PRIORITIES, STATUSES } from "./constants";
 
 interface TicketFormProps {
   initialData?: SupportTicket;

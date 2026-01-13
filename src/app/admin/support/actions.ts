@@ -33,29 +33,64 @@ export type SupportTicket = {
   } | null;
 };
 
-export async function getTickets(): Promise<SupportTicket[]> {
+export type GetTicketsOptions = {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: string;
+  priority?: string;
+};
+
+export async function getTickets(options: GetTicketsOptions = {}): Promise<{
+  tickets: SupportTicket[];
+  count: number;
+}> {
   const { user, role } = await requireAuth("/admin/support");
   const supabase = await createClient();
 
   const isAdmin = role === "admin";
+  const { page = 1, pageSize = 10, search = "", status, priority } = options;
 
   let query = supabase
     .from("support_tickets")
-    .select("*, profiles:created_by(email)")
+    .select("*, profiles:created_by(email)", { count: "exact" })
     .order("created_at", { ascending: false });
 
   if (!isAdmin) {
     query = query.eq("created_by", user.id);
   }
 
-  const { data, error } = await query;
+  // Apply filters
+  if (status && status !== "all") {
+    query = query.eq("status", status);
+  }
+
+  if (priority && priority !== "all") {
+    query = query.eq("priority", priority);
+  }
+
+  // Apply search
+  if (search) {
+    // Note: This simple OR search assumes we can cast text fields comfortably.
+    // For more complex search features, we might need a stored procedure or Full Text Search.
+    // We are searching on: subject, customer_name, customer_email, and description (optional but good).
+    const searchCondition = `subject.ilike.%${search}%,customer_name.ilike.%${search}%,customer_email.ilike.%${search}%`;
+    query = query.or(searchCondition);
+  }
+
+  // Apply pagination
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  query = query.range(from, to);
+
+  const { data, error, count } = await query;
 
   if (error) {
     console.error("Error fetching tickets:", error);
-    return [];
+    return { tickets: [], count: 0 };
   }
 
-  return data as SupportTicket[];
+  return { tickets: data as SupportTicket[], count: count || 0 };
 }
 
 export async function getTicket(id: string): Promise<SupportTicket | null> {
