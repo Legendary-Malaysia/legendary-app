@@ -85,7 +85,7 @@ export default async function SupportPage({
 
       <Card className="border-slate-700/50 bg-slate-800/50 backdrop-blur-sm">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2 text-white">
                 <Ticket className="h-5 w-5 text-indigo-400" />

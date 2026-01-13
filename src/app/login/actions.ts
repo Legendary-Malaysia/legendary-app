@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 const loginSchema = z.object({
   email: z.email("Please enter a valid email address"),
@@ -15,7 +16,7 @@ const signupSchema = loginSchema.extend({
 });
 
 async function createProfile(
-  supabase: any,
+  supabase: SupabaseClient,
   userId: string,
   fullName: string,
   email: string,
@@ -90,11 +91,11 @@ export async function signup(
   }
 
   // Log the signup result for debugging
-  console.log("Signup result:", {
-    user: data.user?.id,
-    session: !!data.session,
-    identities: data.user?.identities?.length,
-  });
+  // console.log("Signup result:", {
+  //   user: data.user?.id,
+  //   session: !!data.session,
+  //   identities: data.user?.identities?.length,
+  // });
 
   // Check if email confirmation is required
   // If identities is empty, the user already exists
@@ -106,25 +107,6 @@ export async function signup(
     };
   }
 
-  // If no session, email confirmation is required
-  if (!data.session) {
-    // Create profile record if it doesn't exist
-    if (data.user) {
-      await createProfile(
-        supabase,
-        data.user.id,
-        result.data.fullName,
-        result.data.email,
-      );
-    }
-
-    console.log("Email confirmation is required");
-    return {
-      message: "Check your email to confirm your account before signing in.",
-    };
-  }
-
-  // User is signed up and logged in directly (no email confirmation required)
   // Create profile record
   if (data.user) {
     await createProfile(
@@ -134,6 +116,16 @@ export async function signup(
       result.data.email,
     );
   }
+
+  // If no session, email confirmation is required
+  if (!data.session) {
+    console.log("Email confirmation is required");
+    return {
+      message: "Check your email to confirm your account before signing in.",
+    };
+  }
+
+  // User is signed up and logged in directly (no email confirmation required)
   console.log("User is signed up and logged in directly");
   revalidatePath("/", "layout");
   redirect("/admin/dashboard");

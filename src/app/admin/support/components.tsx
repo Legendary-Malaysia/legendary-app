@@ -12,6 +12,7 @@ import {
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
+import { STATUSES, PRIORITIES } from "./constants";
 
 export function TicketSearch() {
   const searchParams = useSearchParams();
@@ -71,10 +72,14 @@ export function TicketFilter() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Status</SelectItem>
-          <SelectItem value="open">Open</SelectItem>
-          <SelectItem value="in_progress">In Progress</SelectItem>
-          <SelectItem value="resolved">Resolved</SelectItem>
-          <SelectItem value="closed">Closed</SelectItem>
+          {STATUSES.map((s) => (
+            <SelectItem
+              key={s.value}
+              value={s.value}
+            >
+              {s.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
 
@@ -87,10 +92,14 @@ export function TicketFilter() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Priority</SelectItem>
-          <SelectItem value="low">Low</SelectItem>
-          <SelectItem value="medium">Medium</SelectItem>
-          <SelectItem value="high">High</SelectItem>
-          <SelectItem value="urgent">Urgent</SelectItem>
+          {PRIORITIES.map((p) => (
+            <SelectItem
+              key={p.value}
+              value={p.value}
+            >
+              {p.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

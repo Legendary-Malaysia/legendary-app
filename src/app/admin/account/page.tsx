@@ -4,16 +4,21 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function Account() {
   // This will redirect to login if not authenticated
-  const { user, role } = await requireAuth("/account");
+  const { user, role } = await requireAuth("/admin/account");
 
   const supabase = await createClient();
 
   // Fetch profile data
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("full_name, avatar_url")
     .eq("id", user.id)
     .single();
+
+  if (error) {
+    console.error("Error fetching profile:", error);
+    return null;
+  }
 
   return (
     <AccountForm

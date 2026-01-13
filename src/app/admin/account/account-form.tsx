@@ -14,12 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, User as UserIcon, Mail, LogOut, Lock } from "lucide-react";
+import { Loader2, User as UserIcon, Mail, Lock } from "lucide-react";
 
 interface Profile {
   full_name: string | null;
   avatar_url: string | null;
 }
+const supabase = createClient();
 
 export default function AccountForm({
   user,
@@ -30,7 +31,6 @@ export default function AccountForm({
   profile: Profile | null;
   role: string | null;
 }) {
-  const supabase = createClient();
   const [isPending, startTransition] = useTransition();
   const [fullname, setFullname] = useState(initialProfile?.full_name ?? "");
   const [currentPassword, setCurrentPassword] = useState("");

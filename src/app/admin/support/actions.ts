@@ -14,14 +14,7 @@ export type SupportTicket = {
   description: string;
   status: "open" | "in_progress" | "resolved" | "closed";
   priority: "low" | "medium" | "high" | "urgent";
-  category:
-    | "bug"
-    | "feature_request"
-    | "billing"
-    | "technical_support"
-    | "account_issue"
-    | "general_inquiry"
-    | "other";
+  category: "billing" | "account_issue" | "general_inquiry" | "refund";
   created_by: string;
   assigned_to: string | null;
   created_at: string;
@@ -71,10 +64,9 @@ export async function getTickets(options: GetTicketsOptions = {}): Promise<{
 
   // Apply search
   if (search) {
-    // Note: This simple OR search assumes we can cast text fields comfortably.
-    // For more complex search features, we might need a stored procedure or Full Text Search.
-    // We are searching on: subject, customer_name, customer_email, and description (optional but good).
-    const searchCondition = `subject.ilike.%${search}%,customer_name.ilike.%${search}%,customer_email.ilike.%${search}%`;
+    // Escape special PostgREST filter characters
+    const escapedSearch = search.replace(/[%_\\]/g, "\\$&");
+    const searchCondition = `subject.ilike.%${escapedSearch}%,customer_name.ilike.%${escapedSearch}%,customer_email.ilike.%${escapedSearch}%`;
     query = query.or(searchCondition);
   }
 
@@ -201,7 +193,7 @@ export async function updateTicket(
     return { success: false, error: "All fields are required" };
   }
 
-  const updates: any = {
+  const updates: Record<string, unknown> = {
     customer_name,
     customer_email,
     customer_phone: customer_phone || null,

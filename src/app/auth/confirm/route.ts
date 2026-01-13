@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       redirectTo.searchParams.delete("next");
       return NextResponse.redirect(redirectTo);
     }
+    console.error("OTP verification failed:", error.message);
   }
 
   // return the user to an error page with some instructions

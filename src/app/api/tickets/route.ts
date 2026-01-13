@@ -40,6 +40,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(customer_email)) {
+      return NextResponse.json(
+        { error: "Invalid email format" },
+        { status: 400 },
+      );
+    }
+
     // Initialize Supabase with Secret keys
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SECRET_KEY;
@@ -98,6 +106,15 @@ export async function GET(request: NextRequest) {
   if (!email) {
     return NextResponse.json(
       { error: "Email query parameter is required" },
+      { status: 400 },
+    );
+  }
+
+  // Basic email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return NextResponse.json(
+      { error: "Invalid email format" },
       { status: 400 },
     );
   }
