@@ -29,7 +29,7 @@ export function AdminLayoutWrapper({
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 border-r border-slate-700/50 bg-slate-900/50 backdrop-blur-xl md:block">
+      <aside className="sticky top-0 hidden h-screen w-64 border-r border-slate-700/50 bg-slate-900/50 backdrop-blur-xl md:block">
         <AdminSidebar
           user={user}
           role={role}
