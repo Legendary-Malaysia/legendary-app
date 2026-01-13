@@ -48,7 +48,8 @@ export function AdminSidebar({ user, role, onLinkClick }: AdminSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto p-4">
         {links.map((link) => {
-          const isActive = pathname === link.href;
+          const isActive =
+            pathname === link.href || pathname.startsWith(link.href + "/");
           return (
             <Link
               key={link.href}
@@ -73,12 +74,12 @@ export function AdminSidebar({ user, role, onLinkClick }: AdminSidebarProps) {
         <div className="mb-3 flex items-center gap-3 rounded-lg bg-slate-800/50 px-3 py-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
             <span className="text-sm font-medium text-white">
-              {user.email?.charAt(0).toUpperCase()}
+              {user.email?.charAt(0).toUpperCase() ?? "?"}
             </span>
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="truncate text-sm font-medium text-white">
-              {user.email}
+              {user.email ?? "Unknown"}
             </p>
             <p className="text-xs text-slate-400">{role}</p>
           </div>
