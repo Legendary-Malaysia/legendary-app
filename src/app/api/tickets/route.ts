@@ -82,3 +82,57 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function GET(request: NextRequest) {
+  const apiKey = request.headers.get("x-api-key");
+
+  // Validate API Key
+  if (!apiKey || apiKey !== process.env.CSAGENT_API_KEY) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const searchParams = request.nextUrl.searchParams;
+  const email = searchParams.get("email");
+
+  // Validate email parameter
+  if (!email) {
+    return NextResponse.json(
+      { error: "Email query parameter is required" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    // Initialize Supabase with Secret keys
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("Missing Supabase configuration");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 },
+      );
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data, error } = await supabase
+      .from("support_tickets")
+      .select("subject, description, status, created_at")
+      .eq("customer_email", email)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Supabase error fetching tickets:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, tickets: data });
+  } catch (err) {
+    console.error("API error:", err);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
+  }
+}
