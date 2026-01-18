@@ -1,10 +1,24 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
+// Initialize Supabase client once
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SECRET_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Missing Supabase configuration");
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Helper function for validation
+function validateEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export async function POST(request: NextRequest) {
   const apiKey = request.headers.get("x-api-key");
 
-  // You should set CSAGENT_API_KEY in your .env.local file
   if (!apiKey || apiKey !== process.env.CSAGENT_API_KEY) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -19,7 +33,7 @@ export async function POST(request: NextRequest) {
       customer_name,
       customer_email,
       customer_phone,
-      created_by_user_id, // The ID of the profile creating this ticket
+      created_by_user_id,
     } = body;
 
     // Validate required fields
@@ -33,33 +47,17 @@ export async function POST(request: NextRequest) {
       !created_by_user_id
     ) {
       return NextResponse.json(
-        {
-          error: "Error: Missing required fields",
-        },
+        { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(customer_email)) {
+    if (!validateEmail(customer_email)) {
       return NextResponse.json(
         { error: "Invalid email format" },
         { status: 400 },
       );
     }
-
-    // Initialize Supabase with Secret keys
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SECRET_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("Missing Supabase configuration");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 },
-      );
-    }
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data, error } = await supabase
       .from("support_tickets")
@@ -78,14 +76,17 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Supabase error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to create ticket" },
+        { status: 500 },
+      );
     }
 
-    return NextResponse.json({ success: true, ticket: data });
+    return NextResponse.json({ ticket: data }, { status: 201 });
   } catch (err) {
     console.error("API error:", err);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }
@@ -94,7 +95,6 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const apiKey = request.headers.get("x-api-key");
 
-  // Validate API Key
   if (!apiKey || apiKey !== process.env.CSAGENT_API_KEY) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -102,7 +102,6 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const email = searchParams.get("email");
 
-  // Validate email parameter
   if (!email) {
     return NextResponse.json(
       { error: "Email query parameter is required" },
@@ -110,9 +109,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Basic email format validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!validateEmail(email)) {
     return NextResponse.json(
       { error: "Invalid email format" },
       { status: 400 },
@@ -120,19 +117,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Initialize Supabase with Secret keys
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SECRET_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("Missing Supabase configuration");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 },
-      );
-    }
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const { data, error } = await supabase
       .from("support_tickets")
       .select("subject, description, status, created_at")
@@ -141,14 +125,17 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("Supabase error fetching tickets:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to fetch tickets" },
+        { status: 500 },
+      );
     }
 
-    return NextResponse.json({ success: true, tickets: data });
+    return NextResponse.json({ tickets: data }, { status: 200 });
   } catch (err) {
     console.error("API error:", err);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal server error" },
       { status: 500 },
     );
   }
