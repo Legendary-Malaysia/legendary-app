@@ -229,3 +229,21 @@ export async function updateTicket(
   revalidatePath(`/admin/support/${id}`);
   redirect("/admin/support");
 }
+
+export async function deleteTicket(id: string): Promise<ActionState> {
+  await requireAuth("/admin/support");
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("support_tickets")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error deleting ticket:", error);
+    return { success: false, error: "Failed to delete ticket" };
+  }
+
+  revalidatePath("/admin/support");
+  return { success: true };
+}
