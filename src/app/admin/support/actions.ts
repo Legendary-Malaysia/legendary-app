@@ -231,13 +231,18 @@ export async function updateTicket(
 }
 
 export async function deleteTicket(id: string): Promise<ActionState> {
-  await requireAuth("/admin/support");
+  const { user, role } = await requireAuth("/admin/support");
   const supabase = await createClient();
 
-  const { error } = await supabase
-    .from("support_tickets")
-    .delete()
-    .eq("id", id);
+  const isAdmin = role === "admin";
+
+  let query = supabase.from("support_tickets").delete().eq("id", id);
+
+  if (!isAdmin) {
+    query = query.eq("created_by", user.id);
+  }
+
+  const { error } = await query;
 
   if (error) {
     console.error("Error deleting ticket:", error);
