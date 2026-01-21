@@ -11,6 +11,7 @@ import { Ticket, Plus } from "lucide-react";
 import Link from "next/link";
 import { TicketSearch, TicketFilter, TicketPagination } from "./components";
 import { CATEGORIES } from "./constants";
+import { DeleteTicketButton } from "./delete-ticket-button";
 
 const STATUS_STYLES = {
   open: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -187,12 +188,15 @@ export default async function SupportPage({
                         {formatDate(ticket.created_at)}
                       </td>
                       <td className="px-6 py-4">
-                        <Link
-                          href={`/admin/support/${ticket.id}`}
-                          className="font-medium text-indigo-400 hover:text-indigo-300 hover:underline"
-                        >
-                          Edit
-                        </Link>
+                        <div className="flex items-center gap-4">
+                          <Link
+                            href={`/admin/support/${ticket.id}`}
+                            className="font-medium text-indigo-400 hover:text-indigo-300 hover:underline"
+                          >
+                            Edit
+                          </Link>
+                          <DeleteTicketButton ticketId={ticket.id} />
+                        </div>
                       </td>
                     </tr>
                   ))

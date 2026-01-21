@@ -169,43 +169,46 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
                 const lines = block.split("\n");
                 for (const line of lines) {
                   if (line.trim().startsWith("data: ")) {
+                    let data;
                     try {
                       const jsonStr = line.trim().slice(6);
-                      const data = JSON.parse(jsonStr);
-                      if (data.event === "done") break streamLoop;
-                      if (data.node === "custom") {
-                        // Intermediate status updates
-                        setStatus(data.content || "");
-                      } else if (data.node === "customer_service_team") {
-                        // Final response content
-                        if (!hasStartedTeam) {
-                          hasStartedTeam = true;
-                          setStatus(""); // Clear status when response begins
-                        }
-                        teamContent += data.content || "";
-                        setMessages((prev) =>
-                          prev.map((m) =>
-                            m.id === aiMessageId
-                              ? { ...m, content: teamContent }
-                              : m,
-                          ),
-                        );
-                      } else if (data.error) {
-                        // Handle error event data
-                        throw new Error(data.error);
-                      } else if (!data.node && data.content) {
-                        // Fallback for old/unexpected format
-                        fullContent += data.content;
-                        setMessages((prev) =>
-                          prev.map((m) =>
-                            m.id === aiMessageId
-                              ? { ...m, content: fullContent }
-                              : m,
-                          ),
-                        );
-                      }
+                      data = JSON.parse(jsonStr);
                     } catch (e) {
                       console.error("Error parsing SSE data:", e, line);
+                      continue;
+                    }
+
+                    if (data.event === "done") break streamLoop;
+                    if (data.node === "custom") {
+                      // Intermediate status updates
+                      setStatus(data.content || "");
+                    } else if (data.node === "customer_service_team") {
+                      // Final response content
+                      if (!hasStartedTeam) {
+                        hasStartedTeam = true;
+                        setStatus(""); // Clear status when response begins
+                      }
+                      teamContent += data.content || "";
+                      setMessages((prev) =>
+                        prev.map((m) =>
+                          m.id === aiMessageId
+                            ? { ...m, content: teamContent }
+                            : m,
+                        ),
+                      );
+                    } else if (data.error) {
+                      // Handle error event data
+                      throw new Error(data.error);
+                    } else if (!data.node && data.content) {
+                      // Fallback for old/unexpected format
+                      fullContent += data.content;
+                      setMessages((prev) =>
+                        prev.map((m) =>
+                          m.id === aiMessageId
+                            ? { ...m, content: fullContent }
+                            : m,
+                        ),
+                      );
                     }
                   }
                 }
@@ -221,13 +224,11 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
             }
 
             setError(err);
-            toast.error("Backend Error", {
-              description: err.message,
-            });
           } finally {
             if (abortControllerRef.current === controller) {
               abortControllerRef.current = null;
               setIsLoading(false);
+              setStatus("");
             }
           }
         },

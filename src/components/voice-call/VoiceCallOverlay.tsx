@@ -125,6 +125,7 @@ export function VoiceCallOverlay({
   const [currentSpeaker, setCurrentSpeaker] = useState<"user" | "ai" | null>(
     null,
   );
+  const [connectingDuration, setConnectingDuration] = useState(0);
 
   const { enqueueAudio, stopAudio, resumeAudio, isPlaying } = useAudioPlayer();
 
@@ -228,7 +229,41 @@ export function VoiceCallOverlay({
   //   setIsMuted((prev) => !prev);
   // }, []);
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (status === "connecting") {
+      interval = setInterval(() => {
+        setConnectingDuration((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setConnectingDuration(0);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [status]);
+
   const statusText = useMemo(() => {
+    if (status === "connecting") {
+      if (connectingDuration < 3) return "Preparing your connection...";
+      if (connectingDuration < 8) return "Establishing a secure connection...";
+      if (connectingDuration < 15) return "Curating your experience...";
+      if (connectingDuration < 25)
+        return "Locating the right fragrance specialist for you...";
+      if (connectingDuration < 35)
+        return "Connecting you with a fragrance specialist...";
+      if (connectingDuration < 45)
+        return "Your personal consultant is being notified...";
+      if (connectingDuration < 55)
+        return "A moment, please — your consultant is on the way...";
+      if (connectingDuration < 70)
+        return "Your consultant will be with you shortly...";
+      if (connectingDuration < 85)
+        return "We appreciate your patience - almost there...";
+      return "Thank you for waiting - we'll be with you momentarily...";
+    }
     const statusMap: Record<ConnectionStatus, string> = {
       disconnected: "Disconnected",
       connecting: "Connecting...",
@@ -237,7 +272,7 @@ export function VoiceCallOverlay({
       error: "Connection Error",
     };
     return statusMap[status];
-  }, [status]);
+  }, [status, connectingDuration]);
 
   const statusColor = useMemo(() => {
     const colorMap: Record<ConnectionStatus, string> = {
@@ -277,10 +312,24 @@ export function VoiceCallOverlay({
       >
         {/* Header */}
         <div className="flex w-full items-center justify-between">
-          <div className="flex flex-col">
-            <span className={cn("text-sm font-medium", statusColor)}>
-              {statusText}
-            </span>
+          <div className="flex flex-col gap-1">
+            <div
+              className={cn(
+                "flex items-center text-sm font-medium transition-colors",
+                statusColor,
+              )}
+              role="status"
+              aria-live="polite"
+            >
+              {/* Animated Indicator */}
+              {status === "connecting" && (
+                <span className="relative mr-2 flex size-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current" />
+                </span>
+              )}
+              {/* Status Text */}
+              <span>{statusText}</span>
+            </div>
             <CallTimer startTime={callStartTime} />
           </div>
           <button
