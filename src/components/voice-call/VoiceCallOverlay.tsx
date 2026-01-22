@@ -23,6 +23,12 @@ export interface VoiceCallOverlayProps {
   className?: string;
 }
 
+interface TranscriptItem {
+  id: string;
+  type: "user" | "ai";
+  text: string;
+}
+
 // ============ ANIMATED COMPONENTS ============
 
 function PulsingRings({
@@ -126,6 +132,7 @@ export function VoiceCallOverlay({
     null,
   );
   const [connectingDuration, setConnectingDuration] = useState(0);
+  const [transcript, setTranscript] = useState<string>("");
 
   const { enqueueAudio, stopAudio, resumeAudio, isPlaying } = useAudioPlayer();
 
@@ -140,6 +147,20 @@ export function VoiceCallOverlay({
         case "interrupted":
           stopAudio();
           setCurrentSpeaker(null);
+          break;
+
+        case "input_transcript":
+          const chunk = message.text.trim();
+          if (chunk.length > 0) {
+            setTranscript((prev) => prev + (prev ? " " : "") + chunk);
+          }
+          break;
+
+        case "output_transcript":
+          const chunko = message.text.trim();
+          if (chunko.length > 0) {
+            setTranscript((prev) => prev + (prev ? " " : "") + chunko);
+          }
           break;
 
         case "turn_complete":
@@ -175,6 +196,7 @@ export function VoiceCallOverlay({
     setCallStartTime(null);
     setCurrentSpeaker(null);
     setIsMuted(false);
+    setTranscript("");
     onClose();
   }, [isRecording, stopRecording, stopAudio, send, disconnect, onClose]);
 
@@ -360,6 +382,11 @@ export function VoiceCallOverlay({
           >
             <PhoneCall className="h-8 w-8 text-gray-300" />
           </div>
+        </div>
+
+        {/* Transcript Display */}
+        <div className="flex h-16 w-full flex-col-reverse overflow-hidden px-4">
+          <p className="text-center text-sm text-yellow-400">{transcript}</p>
         </div>
 
         {/* Waveform Indicator */}

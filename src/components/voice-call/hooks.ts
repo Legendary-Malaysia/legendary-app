@@ -31,6 +31,8 @@ export type WebSocketMessage =
   | { type: "tool_result"; function_name: string; result: unknown }
   | { type: "search_code"; code: string }
   | { type: "search_result"; output: string }
+  | { type: "input_transcript"; text: string }
+  | { type: "output_transcript"; text: string }
   | { type: "turn_complete" }
   | { type: "error"; data: string };
 
