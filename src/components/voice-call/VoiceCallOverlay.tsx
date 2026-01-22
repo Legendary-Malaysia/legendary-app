@@ -24,8 +24,7 @@ export interface VoiceCallOverlayProps {
 }
 
 interface TranscriptItem {
-  id: string;
-  type: "user" | "ai";
+  role: "user" | "ai";
   text: string;
 }
 
@@ -132,7 +131,7 @@ export function VoiceCallOverlay({
     null,
   );
   const [connectingDuration, setConnectingDuration] = useState(0);
-  const [transcript, setTranscript] = useState<string>("");
+  const [transcriptItems, setTranscriptItems] = useState<TranscriptItem[]>([]);
 
   const { enqueueAudio, stopAudio, resumeAudio, isPlaying } = useAudioPlayer();
 
@@ -150,16 +149,25 @@ export function VoiceCallOverlay({
           break;
 
         case "input_transcript":
-          const chunk = message.text.trim();
-          if (chunk.length > 0) {
-            setTranscript((prev) => prev + (prev ? " " : "") + chunk);
+          const userChunk = message.text.trim();
+          if (userChunk.length > 0) {
+            setTranscriptItems((prev) =>
+              [
+                ...prev,
+                { role: "user", text: userChunk } as TranscriptItem,
+              ].slice(-100),
+            );
           }
           break;
 
         case "output_transcript":
-          const chunko = message.text.trim();
-          if (chunko.length > 0) {
-            setTranscript((prev) => prev + (prev ? " " : "") + chunko);
+          const aiChunk = message.text.trim();
+          if (aiChunk.length > 0) {
+            setTranscriptItems((prev) =>
+              [...prev, { role: "ai", text: aiChunk } as TranscriptItem].slice(
+                -100,
+              ),
+            );
           }
           break;
 
@@ -196,7 +204,7 @@ export function VoiceCallOverlay({
     setCallStartTime(null);
     setCurrentSpeaker(null);
     setIsMuted(false);
-    setTranscript("");
+    setTranscriptItems([]);
     onClose();
   }, [isRecording, stopRecording, stopAudio, send, disconnect, onClose]);
 
@@ -385,8 +393,25 @@ export function VoiceCallOverlay({
         </div>
 
         {/* Transcript Display */}
-        <div className="flex h-16 w-full flex-col-reverse overflow-hidden px-4">
-          <p className="text-center text-sm text-yellow-400">{transcript}</p>
+        <div
+          className="flex h-20 w-full flex-col justify-end overflow-hidden px-4"
+          style={{
+            // Fades the top 50% of the container to transparent
+            maskImage: "linear-gradient(to bottom, transparent, black 50%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent, black 50%)",
+          }}
+        >
+          <div className="flex flex-wrap items-center justify-center gap-x-1 text-center text-sm">
+            {transcriptItems.map((item, index) => (
+              <span
+                key={index}
+                className={`transition-opacity duration-300 ${item.role === "user" ? "text-yellow-400" : "text-white opacity-90"} `}
+              >
+                {item.text}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Waveform Indicator */}
