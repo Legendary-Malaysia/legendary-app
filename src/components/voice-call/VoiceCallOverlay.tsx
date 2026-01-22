@@ -393,24 +393,42 @@ export function VoiceCallOverlay({
         </div>
 
         {/* Transcript Display */}
+        {/* Container with top-fade mask */}
         <div
-          className="flex h-20 w-full flex-col justify-end overflow-hidden px-4"
+          className="flex h-24 w-full flex-col justify-end overflow-hidden px-4"
           style={{
-            // Fades the top 50% of the container to transparent
-            maskImage: "linear-gradient(to bottom, transparent, black 50%)",
+            maskImage: "linear-gradient(to bottom, transparent, black 40%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent, black 50%)",
+              "linear-gradient(to bottom, transparent, black 40%)",
           }}
         >
-          <div className="flex flex-wrap items-center justify-center gap-x-1 text-center text-sm">
-            {transcriptItems.map((item, index) => (
-              <span
-                key={index}
-                className={`transition-opacity duration-300 ${item.role === "user" ? "text-yellow-400" : "text-white opacity-90"} `}
-              >
-                {item.text}
-              </span>
-            ))}
+          <div className="flex flex-col gap-y-3 pb-2">
+            {transcriptItems
+              .reduce((acc: TranscriptItem[], item) => {
+                const lastGroup = acc[acc.length - 1];
+
+                // If the same speaker is talking, append the text to the last group
+                if (lastGroup && lastGroup.role === item.role) {
+                  lastGroup.text += ` ${item.text}`;
+                  return acc;
+                }
+
+                // If the speaker changed, create a new group (using a copy to avoid mutation)
+                acc.push({ ...item });
+                return acc;
+              }, [])
+              .map((group, i) => (
+                <p
+                  key={i}
+                  className={`text-center text-sm leading-relaxed transition-all duration-300 ${
+                    group.role === "user"
+                      ? "text-yellow-400"
+                      : "text-emerald-400"
+                  }`}
+                >
+                  {group.text}
+                </p>
+              ))}
           </div>
         </div>
 
