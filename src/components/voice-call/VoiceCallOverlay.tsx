@@ -185,7 +185,7 @@ export function VoiceCallOverlay({
           [
             ...prev,
             { role: "ai", text: textToDisplay } as TranscriptItem,
-          ].slice(-200),
+          ].slice(-300),
         );
       }
     }
@@ -493,9 +493,9 @@ export function VoiceCallOverlay({
         <div
           className="flex h-24 w-full flex-col justify-end overflow-hidden px-4"
           style={{
-            maskImage: "linear-gradient(to bottom, transparent, black 40%)",
+            maskImage: "linear-gradient(to bottom, transparent, black 60%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent, black 40%)",
+              "linear-gradient(to bottom, transparent, black 60%)",
           }}
         >
           <div className="flex flex-col gap-y-3 pb-2">
@@ -525,10 +525,10 @@ export function VoiceCallOverlay({
               .map((group, i) => (
                 <p
                   key={i}
-                  className={`text-center text-sm leading-relaxed transition-all duration-300 ${
+                  className={`text-center text-xs leading-relaxed transition-all duration-300 ${
                     group.role === "user"
-                      ? "text-yellow-400"
-                      : "text-emerald-400"
+                      ? "text-yellow-400/60"
+                      : "text-emerald-400/60"
                   }`}
                 >
                   {group.text}
