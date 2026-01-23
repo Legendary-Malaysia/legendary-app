@@ -311,7 +311,24 @@ export function useAudioRecorder(onAudioData: (data: string) => void) {
 const MAX_QUEUE_SIZE = 10; // Maximum chunks in queue before dropping old frames
 const SCHEDULE_AHEAD_TIME = 0.1; // Schedule audio 100ms ahead for seamless playback
 
-export function useAudioPlayer() {
+// Calculate duration of PCM audio data in seconds
+export const calculatePCMDuration = (
+  byteLength: number,
+  sampleRate: number = CONFIG.RECEIVE_SAMPLE_RATE,
+): number => {
+  // 16-bit PCM: 2 bytes per sample
+  const numSamples = byteLength / 2;
+  return numSamples / sampleRate;
+};
+
+export interface AudioChunkInfo {
+  duration: number;
+  byteLength: number;
+}
+
+export function useAudioPlayer(
+  onChunkPlayed?: (chunkInfo: AudioChunkInfo) => void,
+) {
   const audioQueueRef = useRef<ArrayBuffer[]>([]);
   const isPlayingRef = useRef(false);
   const playbackContextRef = useRef<AudioContext | null>(null);
@@ -319,6 +336,15 @@ export function useAudioPlayer() {
   const shouldStopRef = useRef(false);
   const nextStartTimeRef = useRef(0);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Track cumulative playback progress
+  const totalPlayedDurationRef = useRef(0);
+  const onChunkPlayedRef = useRef(onChunkPlayed);
+
+  // Keep the callback ref updated
+  useEffect(() => {
+    onChunkPlayedRef.current = onChunkPlayed;
+  }, [onChunkPlayed]);
 
   const getAudioContext = useCallback(async () => {
     if (
@@ -363,8 +389,22 @@ export function useAudioPlayer() {
       // Update next start time for seamless chaining
       nextStartTimeRef.current = startTime + audioBuffer.duration;
 
+      // Capture chunk info for callback
+      const chunkDuration = audioBuffer.duration;
+      const chunkByteLength = audioData.byteLength;
+
       source.onended = () => {
         activeSourcesRef.current.delete(source);
+
+        // Update total played duration and notify
+        totalPlayedDurationRef.current += chunkDuration;
+        if (onChunkPlayedRef.current) {
+          onChunkPlayedRef.current({
+            duration: chunkDuration,
+            byteLength: chunkByteLength,
+          });
+        }
+
         // Check if all audio has finished playing
         if (
           activeSourcesRef.current.size === 0 &&
@@ -451,6 +491,7 @@ export function useAudioPlayer() {
 
     audioQueueRef.current = [];
     nextStartTimeRef.current = 0;
+    totalPlayedDurationRef.current = 0; // Reset played duration
     isPlayingRef.current = false;
     setIsPlaying(false);
   }, []);
@@ -458,6 +499,11 @@ export function useAudioPlayer() {
   const resumeAudio = useCallback(() => {
     shouldStopRef.current = false;
     nextStartTimeRef.current = 0;
+    totalPlayedDurationRef.current = 0; // Reset for new response
+  }, []);
+
+  const getTotalPlayedDuration = useCallback(() => {
+    return totalPlayedDurationRef.current;
   }, []);
 
   useEffect(() => {
@@ -469,5 +515,11 @@ export function useAudioPlayer() {
     };
   }, [stopAudio]);
 
-  return { enqueueAudio, stopAudio, resumeAudio, isPlaying };
+  return {
+    enqueueAudio,
+    stopAudio,
+    resumeAudio,
+    isPlaying,
+    getTotalPlayedDuration,
+  };
 }
