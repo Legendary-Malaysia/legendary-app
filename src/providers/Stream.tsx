@@ -6,7 +6,10 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { useStream } from "@langchain/langgraph-sdk/react";
+import {
+  useStream,
+  type MessageMetadata,
+} from "@langchain/langgraph-sdk/react";
 import { type Message } from "@langchain/langgraph-sdk";
 import {
   type UIMessage,
@@ -32,6 +35,8 @@ const useTypedStream = useStream<
 type StreamContextType = ReturnType<typeof useTypedStream> & {
   language: "en" | "id";
   setLanguage: (lang: "en" | "id") => void;
+  getMessagesMetadata: (message: Message) => MessageMetadata<StateType>;
+  setBranch: (branch: string) => Promise<void>;
 };
 const StreamContext = createContext<StreamContextType | undefined>(undefined);
 

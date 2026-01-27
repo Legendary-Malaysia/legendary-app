@@ -56,10 +56,6 @@ export function HumanMessage({
     thread.submit(
       { messages: [newMessage] },
       {
-        checkpoint: parentCheckpoint,
-        streamMode: ["values"],
-        streamSubgraphs: true,
-        streamResumable: true,
         optimisticValues: (prev) => {
           const values = meta?.firstSeenState?.values;
           if (!values) return prev;

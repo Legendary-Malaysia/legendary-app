@@ -340,9 +340,6 @@ export function Thread() {
     stream.submit(
       { messages: [...toolMessages, newHumanMessage], context },
       {
-        streamMode: ["values"],
-        streamSubgraphs: true,
-        streamResumable: true,
         optimisticValues: (prev) => ({
           ...prev,
           context,
@@ -370,12 +367,7 @@ export function Thread() {
     // Do this so the loading state is correct
     prevMessageLength.current = Math.max(0, prevMessageLength.current - 1);
     setFirstTokenReceived(false);
-    stream.submit(undefined, {
-      checkpoint: parentCheckpoint,
-      streamMode: ["values"],
-      streamSubgraphs: true,
-      streamResumable: true,
-    });
+    stream.submit(undefined, {});
   };
 
   const chatStarted = !!threadId || !!messages.length;

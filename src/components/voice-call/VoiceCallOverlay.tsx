@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PhoneOff, Mic, MicOff, X, PhoneCall } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -7,8 +7,10 @@ import {
   useAudioRecorder,
   useAudioPlayer,
   base64ToArrayBuffer,
+  calculatePCMDuration,
   type WebSocketMessage,
   type ConnectionStatus,
+  type AudioChunkInfo,
 } from "./hooks";
 
 // ============ TYPES ============
@@ -21,6 +23,11 @@ export interface VoiceCallOverlayProps {
   enableFunctions?: boolean;
   animationSpeed?: number;
   className?: string;
+}
+
+interface TranscriptItem {
+  role: "user" | "ai";
+  text: string;
 }
 
 // ============ ANIMATED COMPONENTS ============
@@ -126,23 +133,141 @@ export function VoiceCallOverlay({
     null,
   );
   const [connectingDuration, setConnectingDuration] = useState(0);
+  const [transcriptItems, setTranscriptItems] = useState<TranscriptItem[]>([]);
 
-  const { enqueueAudio, stopAudio, resumeAudio, isPlaying } = useAudioPlayer();
+  // Transcript synchronization state
+  // Buffer for AI transcripts waiting to be displayed
+  const bufferedTranscriptsRef = useRef<string[]>([]);
+  // Total estimated audio duration for buffered transcripts
+  const totalAudioDurationRef = useRef(0);
+  // Duration of audio that has been played (used to calculate when to release buffered text)
+  const playedAudioDurationRef = useRef(0);
+  // Number of characters already released to the UI
+  const releasedCharCountRef = useRef(0);
+  const MAX_TRANSCRIPT_ITEMS = 300;
+
+  // Callback when an audio chunk finishes playing - release proportional transcript text
+  const handleChunkPlayed = useCallback((chunkInfo: AudioChunkInfo) => {
+    playedAudioDurationRef.current += chunkInfo.duration;
+
+    // Calculate how much text should have been displayed by now
+    const totalBufferedDuration = totalAudioDurationRef.current;
+    const playedDuration = playedAudioDurationRef.current;
+
+    if (
+      totalBufferedDuration <= 0 ||
+      bufferedTranscriptsRef.current.length === 0
+    ) {
+      return;
+    }
+
+    // Calculate what fraction of the total transcript we should have released so far
+    const targetDisplayRatio = Math.min(
+      playedDuration / totalBufferedDuration,
+      1,
+    );
+    const totalBufferedText = bufferedTranscriptsRef.current.join("");
+    const targetCharCount = Math.floor(
+      totalBufferedText.length * targetDisplayRatio,
+    );
+
+    // Extract everything from where we left off up to the target
+    const charsToRelease = targetCharCount - releasedCharCountRef.current;
+
+    if (charsToRelease > 0) {
+      const textToDisplay = totalBufferedText.substring(
+        releasedCharCountRef.current,
+        targetCharCount,
+      );
+      releasedCharCountRef.current = targetCharCount;
+
+      if (textToDisplay.length > 0) {
+        setTranscriptItems((prev) =>
+          [
+            ...prev,
+            { role: "ai", text: textToDisplay } as TranscriptItem,
+          ].slice(-MAX_TRANSCRIPT_ITEMS),
+        );
+      }
+    }
+  }, []);
+
+  const { enqueueAudio, stopAudio, resumeAudio, isPlaying } =
+    useAudioPlayer(handleChunkPlayed);
+
+  // Flush remaining buffered transcripts (on interruption or turn complete)
+  const flushBufferedTranscripts = useCallback(() => {
+    const totalBufferedText = bufferedTranscriptsRef.current.join("");
+
+    if (totalBufferedText.length > 0) {
+      // Release everything that hasn't been displayed yet
+      const remainingText = totalBufferedText.substring(
+        releasedCharCountRef.current,
+      );
+
+      if (remainingText.length > 0) {
+        setTranscriptItems((prev) =>
+          [
+            ...prev,
+            { role: "ai", text: remainingText } as TranscriptItem,
+          ].slice(-MAX_TRANSCRIPT_ITEMS),
+        );
+      }
+    }
+
+    // Reset buffer state
+    bufferedTranscriptsRef.current = [];
+    totalAudioDurationRef.current = 0;
+    playedAudioDurationRef.current = 0;
+    releasedCharCountRef.current = 0;
+  }, []);
 
   const handleMessage = useCallback(
     (message: WebSocketMessage) => {
       switch (message.type) {
-        case "audio":
+        case "audio": {
           const audioData = base64ToArrayBuffer(message.data);
+          // Track audio duration for transcript sync
+          const audioDuration = calculatePCMDuration(audioData.byteLength);
+          totalAudioDurationRef.current += audioDuration;
           enqueueAudio(audioData);
           break;
+        }
 
-        case "interrupted":
+        case "interrupted": {
+          // Flush any remaining buffered transcripts before stopping
+          flushBufferedTranscripts();
           stopAudio();
           setCurrentSpeaker(null);
           break;
+        }
+
+        case "input_transcript": {
+          // User transcripts display immediately (no sync needed)
+          const userChunk = message.text;
+          if (userChunk.length > 0) {
+            setTranscriptItems((prev) =>
+              [
+                ...prev,
+                { role: "user", text: userChunk } as TranscriptItem,
+              ].slice(-MAX_TRANSCRIPT_ITEMS),
+            );
+          }
+          break;
+        }
+
+        case "output_transcript": {
+          // Buffer AI transcripts for synchronized display
+          const aiChunk = message.text;
+          if (aiChunk.length > 0) {
+            bufferedTranscriptsRef.current.push(aiChunk);
+          }
+          break;
+        }
 
         case "turn_complete":
+          // Flush remaining buffered transcripts when turn ends
+          flushBufferedTranscripts();
           resumeAudio();
           break;
 
@@ -151,7 +276,7 @@ export function VoiceCallOverlay({
           break;
       }
     },
-    [enqueueAudio, stopAudio, resumeAudio],
+    [enqueueAudio, stopAudio, resumeAudio, flushBufferedTranscripts],
   );
 
   const { connect, disconnect, send, status, setStatus, isConnected } =
@@ -175,6 +300,12 @@ export function VoiceCallOverlay({
     setCallStartTime(null);
     setCurrentSpeaker(null);
     setIsMuted(false);
+    setTranscriptItems([]);
+    // Reset buffered transcript state
+    bufferedTranscriptsRef.current = [];
+    totalAudioDurationRef.current = 0;
+    playedAudioDurationRef.current = 0;
+    releasedCharCountRef.current = 0;
     onClose();
   }, [isRecording, stopRecording, stopAudio, send, disconnect, onClose]);
 
@@ -359,6 +490,55 @@ export function VoiceCallOverlay({
             )}
           >
             <PhoneCall className="h-8 w-8 text-gray-300" />
+          </div>
+        </div>
+
+        {/* Transcript Display */}
+        {/* Container with top-fade mask */}
+        <div
+          className="flex h-24 w-full flex-col justify-end overflow-hidden px-4"
+          style={{
+            maskImage: "linear-gradient(to bottom, transparent, black 60%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent, black 60%)",
+          }}
+        >
+          <div className="flex flex-col gap-y-3 pb-2">
+            {transcriptItems
+              // .filter((item) => item.role === "ai") // Hide user transcripts for now
+              .reduce((acc: TranscriptItem[], item) => {
+                const lastGroup = acc[acc.length - 1];
+
+                // If the same speaker is talking, append the text to the last group
+                if (lastGroup && lastGroup.role === item.role) {
+                  // Add a space only for user transcripts if needed (neither ends/starts with space)
+                  // AI fragments are already spaced correctly in the buffer
+                  const needsSpace =
+                    item.role === "user" &&
+                    lastGroup.text.length > 0 &&
+                    !lastGroup.text.endsWith(" ") &&
+                    !item.text.startsWith(" ");
+
+                  lastGroup.text += (needsSpace ? " " : "") + item.text;
+                  return acc;
+                }
+
+                // If the speaker changed, create a new group (using a copy to avoid mutation)
+                acc.push({ ...item });
+                return acc;
+              }, [])
+              .map((group, i) => (
+                <p
+                  key={i}
+                  className={`text-center text-xs leading-relaxed transition-all duration-300 ${
+                    group.role === "user"
+                      ? "text-yellow-400/60"
+                      : "text-emerald-400/60"
+                  }`}
+                >
+                  {group.text}
+                </p>
+              ))}
           </div>
         </div>
 
