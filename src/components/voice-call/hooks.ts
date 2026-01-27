@@ -502,9 +502,9 @@ export function useAudioPlayer(
     totalPlayedDurationRef.current = 0; // Reset for new response
   }, []);
 
-  const getTotalPlayedDuration = useCallback(() => {
-    return totalPlayedDurationRef.current;
-  }, []);
+  // const getTotalPlayedDuration = useCallback(() => {
+  //   return totalPlayedDurationRef.current;
+  // }, []);
 
   useEffect(() => {
     return () => {
@@ -520,6 +520,6 @@ export function useAudioPlayer(
     stopAudio,
     resumeAudio,
     isPlaying,
-    getTotalPlayedDuration,
+    // getTotalPlayedDuration,
   };
 }

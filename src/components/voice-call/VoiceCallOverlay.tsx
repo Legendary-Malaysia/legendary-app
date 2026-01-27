@@ -144,6 +144,7 @@ export function VoiceCallOverlay({
   const playedAudioDurationRef = useRef(0);
   // Number of characters already released to the UI
   const releasedCharCountRef = useRef(0);
+  const MAX_TRANSCRIPT_ITEMS = 300;
 
   // Callback when an audio chunk finishes playing - release proportional transcript text
   const handleChunkPlayed = useCallback((chunkInfo: AudioChunkInfo) => {
@@ -185,7 +186,7 @@ export function VoiceCallOverlay({
           [
             ...prev,
             { role: "ai", text: textToDisplay } as TranscriptItem,
-          ].slice(-300),
+          ].slice(-MAX_TRANSCRIPT_ITEMS),
         );
       }
     }
@@ -209,7 +210,7 @@ export function VoiceCallOverlay({
           [
             ...prev,
             { role: "ai", text: remainingText } as TranscriptItem,
-          ].slice(-200),
+          ].slice(-MAX_TRANSCRIPT_ITEMS),
         );
       }
     }
@@ -224,22 +225,24 @@ export function VoiceCallOverlay({
   const handleMessage = useCallback(
     (message: WebSocketMessage) => {
       switch (message.type) {
-        case "audio":
+        case "audio": {
           const audioData = base64ToArrayBuffer(message.data);
           // Track audio duration for transcript sync
           const audioDuration = calculatePCMDuration(audioData.byteLength);
           totalAudioDurationRef.current += audioDuration;
           enqueueAudio(audioData);
           break;
+        }
 
-        case "interrupted":
+        case "interrupted": {
           // Flush any remaining buffered transcripts before stopping
           flushBufferedTranscripts();
           stopAudio();
           setCurrentSpeaker(null);
           break;
+        }
 
-        case "input_transcript":
+        case "input_transcript": {
           // User transcripts display immediately (no sync needed)
           const userChunk = message.text;
           if (userChunk.length > 0) {
@@ -247,18 +250,20 @@ export function VoiceCallOverlay({
               [
                 ...prev,
                 { role: "user", text: userChunk } as TranscriptItem,
-              ].slice(-200),
+              ].slice(-MAX_TRANSCRIPT_ITEMS),
             );
           }
           break;
+        }
 
-        case "output_transcript":
+        case "output_transcript": {
           // Buffer AI transcripts for synchronized display
           const aiChunk = message.text;
           if (aiChunk.length > 0) {
             bufferedTranscriptsRef.current.push(aiChunk);
           }
           break;
+        }
 
         case "turn_complete":
           // Flush remaining buffered transcripts when turn ends
