@@ -55,25 +55,25 @@ export async function getChatSessions(
   }
 
   // Handle Search on Email or ID
-  if (search) {
-    const escapedSearch = search.replace(/[%_\\]/g, "\\$&");
+  // if (search) {
+  //   const escapedSearch = search.replace(/[%_\\]/g, "\\$&");
 
-    // Fetch matching profiles first since we can't join directly
-    const { data: matchingProfiles } = await supabase
-      .from("profiles")
-      .select("id")
-      .ilike("email", `%${escapedSearch}%`);
+  //   // Fetch matching profiles first since we can't join directly
+  //   const { data: matchingProfiles } = await supabase
+  //     .from("profiles")
+  //     .select("id")
+  //     .ilike("email", `%${escapedSearch}%`);
 
-    const profileIds = matchingProfiles?.map((p) => p.id) || [];
+  //   const profileIds = matchingProfiles?.map((p) => p.id) || [];
 
-    if (profileIds.length > 0) {
-      query = query.or(
-        `id.ilike.%${escapedSearch}%,user_id.in.(${profileIds.join(",")})`,
-      );
-    } else {
-      query = query.ilike("id", `%${escapedSearch}%`);
-    }
-  }
+  //   if (profileIds.length > 0) {
+  //     query = query.or(
+  //       `id.ilike.%${escapedSearch}%,user_id.in.(${profileIds.join(",")})`,
+  //     );
+  //   } else {
+  //     query = query.ilike("id", `%${escapedSearch}%`);
+  //   }
+  // }
 
   // Handle sorting and pagination
   query = query.order("updated_at", { ascending: false });
@@ -165,17 +165,16 @@ export async function deleteChatSession(id: string) {
 
   const isAdmin = role === "admin";
 
-  let query = supabase.from("chat_sessions").delete().eq("id", id);
+  let query = supabase.from("chat_sessions").delete().eq("id", id).select("id"); // Return deleted row to verify deletion;
 
   if (!isAdmin) {
     query = query.eq("user_id", user.id);
   }
 
-  const { error } = await query;
+  const { data, error } = await query;
 
-  if (error) {
-    console.error("Error deleting chat session:", error);
-    return { success: false, error: "Failed to delete session" };
+  if (!data || data.length === 0) {
+    return { success: false, error: "Session not found or access denied" };
   }
 
   revalidatePath("/admin/conversations");

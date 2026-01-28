@@ -40,6 +40,10 @@ export default async function ConversationDetailPage({
 
   const { session } = data;
 
+  if (!session) {
+    notFound();
+  }
+
   return (
     <div className="space-y-6">
       <Link
@@ -90,7 +94,7 @@ export default async function ConversationDetailPage({
               <div>
                 <p className="text-slate-500">Total Messages</p>
                 <p className="font-medium text-slate-300">
-                  {session.messages.length}
+                  {session.messages?.length ?? 0}
                 </p>
               </div>
             </CardContent>

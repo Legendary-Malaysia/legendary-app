@@ -32,7 +32,8 @@ export default async function ConversationsPage({
   const { search: query = "", page = "1" } = await searchParams;
 
   const pageSize = 10;
-  const currentPage = Number(page) || 1;
+  const parsedPage = Math.floor(Number(page));
+  const currentPage = parsedPage > 0 ? parsedPage : 1;
 
   const { sessions, count } = await getChatSessions({
     page: currentPage,
@@ -67,9 +68,9 @@ export default async function ConversationsPage({
               </CardDescription>
             </div>
             {/* Search */}
-            <div className="flex flex-col gap-2 sm:flex-row">
+            {/* <div className="flex flex-col gap-2 sm:flex-row">
               <SessionSearch />
-            </div>
+            </div> */}
           </div>
         </CardHeader>
         <CardContent>
