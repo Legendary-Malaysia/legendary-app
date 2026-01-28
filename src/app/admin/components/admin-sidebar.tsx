@@ -34,14 +34,14 @@ export function AdminSidebar({ user, role, onLinkClick }: AdminSidebarProps) {
       icon: Ticket,
     },
     {
-      href: "/admin/account",
-      label: "Account",
-      icon: User,
-    },
-    {
       href: "/admin/conversations",
       label: "Conversations",
       icon: MessageSquare,
+    },
+    {
+      href: "/admin/account",
+      label: "Account",
+      icon: User,
     },
   ];
 

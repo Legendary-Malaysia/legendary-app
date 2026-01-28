@@ -7,17 +7,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  ChevronLeft,
-  MessageSquare,
-  User,
-  Bot,
-  Terminal,
-  ShieldAlert,
-} from "lucide-react";
+import { ChevronLeft, MessageSquare } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 interface ConversationDetailPageProps {
   params: Promise<{
@@ -58,7 +49,6 @@ export default async function ConversationDetailPage({
         <ChevronLeft className="h-4 w-4" />
         Back to Conversations
       </Link>
-
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">
@@ -69,7 +59,6 @@ export default async function ConversationDetailPage({
           </p>
         </div>
       </div>
-
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Info Sidebar */}
         <div className="lg:col-span-1">
@@ -116,7 +105,7 @@ export default async function ConversationDetailPage({
                 <MessageSquare className="h-5 w-5 text-indigo-400" />
                 Transcript
               </CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="mb-4 text-slate-400">
                 Full history of messages in this session
               </CardDescription>
             </CardHeader>
