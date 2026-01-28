@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, User, LogOut, Ticket } from "lucide-react";
+import {
+  LayoutDashboard,
+  User,
+  LogOut,
+  Ticket,
+  MessageSquare,
+} from "lucide-react";
 import { LegendaryLogo } from "@/components/icons/legendary";
 import { cn } from "@/lib/utils";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -31,6 +37,11 @@ export function AdminSidebar({ user, role, onLinkClick }: AdminSidebarProps) {
       href: "/admin/account",
       label: "Account",
       icon: User,
+    },
+    {
+      href: "/admin/conversations",
+      label: "Conversations",
+      icon: MessageSquare,
     },
   ];
 
