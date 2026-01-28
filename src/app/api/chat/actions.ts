@@ -8,37 +8,21 @@ export async function ensureChatSession(sessionId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Check if session exists
-  const { data: session, error: fetchError } = await supabase
-    .from("chat_sessions")
-    .select("id, user_id")
-    .eq("id", sessionId)
-    .single();
-
-  if (fetchError && fetchError.code !== "PGRST116") {
-    console.error("Error fetching chat session:", fetchError);
-    return { success: false, error: fetchError.message };
-  }
-
-  if (session) {
-    // If session exists but has no user_id and we are authenticated, optionally update it?
-    // For now, just return success.
-    return { success: true, sessionId: session.id };
-  }
-
-  // Create session if it doesn't exist
+  // Use upsert with ignoreDuplicates to ensure the session exists without crashing if it was just created
+  // by a concurrent request. This also works around RLS issues where anonymous users might not be
+  // able to 'select' the session they just created.
   const insertData: any = { id: sessionId };
   if (user) {
     insertData.user_id = user.id;
   }
 
-  const { error: insertError } = await supabase
+  const { error: upsertError } = await supabase
     .from("chat_sessions")
-    .insert(insertData);
+    .upsert(insertData, { onConflict: "id", ignoreDuplicates: true });
 
-  if (insertError) {
-    console.error("Error creating chat session:", insertError);
-    return { success: false, error: insertError.message };
+  if (upsertError) {
+    console.error("Error ensuring chat session:", upsertError);
+    return { success: false, error: upsertError.message };
   }
 
   return { success: true, sessionId };
