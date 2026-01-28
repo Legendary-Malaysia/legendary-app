@@ -22,7 +22,7 @@ export type ChatSession = {
 export type ChatMessage = {
   id: string;
   session_id: string;
-  role: "user" | "assistant" | "system" | "tool";
+  role: "human" | "ai" | "system" | "tool";
   content: string;
   metadata: any;
   created_at: string;

@@ -35,19 +35,7 @@ function formatDate(dateString: string) {
   });
 }
 
-const ROLE_ICONS = {
-  user: User,
-  assistant: Bot,
-  system: ShieldAlert,
-  tool: Terminal,
-};
-
-const ROLE_STYLES = {
-  user: "bg-indigo-500/10 border-indigo-500/20 text-indigo-400",
-  assistant: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
-  system: "bg-slate-500/10 border-slate-500/20 text-slate-400",
-  tool: "bg-amber-500/10 border-amber-500/20 text-amber-400",
-};
+import { ConversationThread } from "./ConversationThread";
 
 export default async function ConversationDetailPage({
   params,
@@ -133,57 +121,7 @@ export default async function ConversationDetailPage({
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-slate-700/50">
-                {session.messages.length === 0 ? (
-                  <div className="p-8 text-center text-slate-500">
-                    No messages in this session.
-                  </div>
-                ) : (
-                  session.messages.map((message) => {
-                    const Icon =
-                      ROLE_ICONS[message.role as keyof typeof ROLE_ICONS] ||
-                      MessageSquare;
-                    return (
-                      <div
-                        key={message.id}
-                        className="flex gap-4 p-6 transition-colors hover:bg-slate-700/10"
-                      >
-                        <div
-                          className={cn(
-                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
-                            ROLE_STYLES[
-                              message.role as keyof typeof ROLE_STYLES
-                            ] || "bg-slate-700 text-slate-300",
-                          )}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                              {message.role}
-                            </span>
-                            <span className="text-[10px] text-slate-500">
-                              {formatDate(message.created_at)}
-                            </span>
-                          </div>
-                          <div className="prose prose-invert max-w-none text-slate-300">
-                            {message.content}
-                          </div>
-                          {message.metadata &&
-                            Object.keys(message.metadata).length > 0 && (
-                              <div className="mt-2 rounded bg-slate-900/50 p-2 text-[10px] font-mono text-slate-500">
-                                <pre>
-                                  {JSON.stringify(message.metadata, null, 2)}
-                                </pre>
-                              </div>
-                            )}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+              <ConversationThread messages={session.messages} />
             </CardContent>
           </Card>
         </div>
