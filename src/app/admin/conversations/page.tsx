@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { MessageSquare } from "lucide-react";
 import Link from "next/link";
-import { SessionSearch, SessionPagination } from "./components";
+import { SessionPagination } from "./components";
 import { DeleteSessionButton } from "./delete-session-button";
 
 function formatDate(dateString: string) {

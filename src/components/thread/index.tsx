@@ -307,7 +307,7 @@ export function Thread() {
   // Reset thread ID on reload/mount
   useEffect(() => {
     _setThreadId(null);
-  }, []);
+  }, [_setThreadId]);
 
   // TODO: this should be part of the useStream hook
   const prevMessageLength = useRef(0);

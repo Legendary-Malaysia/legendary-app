@@ -24,7 +24,7 @@ export type ChatMessage = {
   session_id: string;
   role: "human" | "ai" | "system" | "tool";
   content: string;
-  metadata: any;
+  metadata: Record<string, string>;
   created_at: string;
 };
 
@@ -172,6 +172,11 @@ export async function deleteChatSession(id: string) {
   }
 
   const { data, error } = await query;
+
+  if (error) {
+    console.error("Error deleting chat session:", error);
+    return { success: false, error: error.message };
+  }
 
   if (!data || data.length === 0) {
     return { success: false, error: "Session not found or access denied" };

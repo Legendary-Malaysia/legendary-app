@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { ChevronLeft, MessageSquare } from "lucide-react";
 import Link from "next/link";
+import { ConversationThread } from "./ConversationThread";
 
 interface ConversationDetailPageProps {
   params: Promise<{
@@ -25,8 +26,6 @@ function formatDate(dateString: string) {
     minute: "2-digit",
   });
 }
-
-import { ConversationThread } from "./ConversationThread";
 
 export default async function ConversationDetailPage({
   params,

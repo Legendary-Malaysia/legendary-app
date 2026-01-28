@@ -1,20 +1,12 @@
 "use client";
 
-import { MessageSquare, User, Bot, ShieldAlert, Terminal } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { MessageSquare, ShieldAlert } from "lucide-react";
 import { MarkdownText } from "@/components/thread/markdown-text";
 import { ChatMessage } from "../actions";
 
 interface ConversationThreadProps {
   messages: ChatMessage[];
 }
-
-const ROLE_ICONS = {
-  user: User,
-  assistant: Bot,
-  system: ShieldAlert,
-  tool: Terminal,
-};
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleString("en-US", {
