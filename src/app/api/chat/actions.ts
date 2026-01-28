@@ -34,6 +34,12 @@ export async function logChatMessage(
   content: string,
   metadata: any = {},
 ) {
+  const enableLogging = process.env.ENABLE_CONVERSATION_LOGGING === "true";
+
+  if (!enableLogging) {
+    return { success: true };
+  }
+
   const supabase = await createClient();
 
   // Ensure session exists first
