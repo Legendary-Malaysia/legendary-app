@@ -9,6 +9,7 @@ import {
 import { MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { SessionSearch, SessionPagination } from "./components";
+import { DeleteSessionButton } from "./delete-session-button";
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString("en-US", {
@@ -125,12 +126,15 @@ export default async function ConversationsPage({
                         {formatDate(session.created_at)}
                       </td>
                       <td className="px-6 py-4">
-                        <Link
-                          href={`/admin/conversations/${session.id}`}
-                          className="font-medium text-indigo-400 hover:text-indigo-300 hover:underline"
-                        >
-                          Detail
-                        </Link>
+                        <div className="flex items-center gap-4">
+                          <Link
+                            href={`/admin/conversations/${session.id}`}
+                            className="font-medium text-indigo-400 hover:text-indigo-300 hover:underline"
+                          >
+                            Detail
+                          </Link>
+                          <DeleteSessionButton sessionId={session.id} />
+                        </div>
                       </td>
                     </tr>
                   ))
