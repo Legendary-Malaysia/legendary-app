@@ -15,6 +15,7 @@ export function LegendaryLogo({
       alt="Legendary Logo"
       width={width}
       height={height}
+      loading="eager"
     />
   );
 }
