@@ -54,3 +54,17 @@ CREATE POLICY "Enable select for owners" ON public.chat_messages
             AND user_id = auth.uid()
         )
     );
+
+-- Delete policy for chat_sessions
+CREATE POLICY "Enable delete for owners" ON public.chat_sessions
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Delete policy for chat_messages (needed for cascade to work)
+CREATE POLICY "Enable delete for owners" ON public.chat_messages
+    FOR DELETE USING (
+        EXISTS (
+            SELECT 1 FROM public.chat_sessions
+            WHERE id = chat_messages.session_id
+            AND user_id = auth.uid()
+        )
+    );
