@@ -149,7 +149,11 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
                       )?.text || "";
 
                 if (content) {
-                  logChatMessage(sessionId, "human", content, { language });
+                  logChatMessage(sessionId, "human", content, {
+                    language,
+                  }).catch((e) =>
+                    console.error("Failed to log human message:", e),
+                  );
                 }
               }
             }
@@ -243,10 +247,13 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
             }
 
             // Log AI message once streaming is complete
-            if (sessionId && teamContent) {
-              logChatMessage(sessionId, "ai", teamContent, { language });
-            } else if (sessionId && fullContent) {
-              logChatMessage(sessionId, "ai", fullContent, { language });
+            if (sessionId) {
+              const content = teamContent || fullContent;
+              if (content) {
+                logChatMessage(sessionId, "ai", content, { language }).catch(
+                  (e) => console.error("Failed to log AI message:", e),
+                );
+              }
             }
           } catch (err: any) {
             // Ignore abort errors
