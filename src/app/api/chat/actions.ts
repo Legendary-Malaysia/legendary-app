@@ -14,6 +14,8 @@ export async function ensureChatSession(sessionId: string) {
   const insertData: any = { id: sessionId };
   if (user) {
     insertData.user_id = user.id;
+  } else {
+    insertData.is_anonymous = true;
   }
 
   const { error: upsertError } = await supabase
