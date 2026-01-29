@@ -304,6 +304,11 @@ export function Thread() {
     }
   }, [stream.error]);
 
+  // Reset thread ID on reload/mount
+  useEffect(() => {
+    _setThreadId(null);
+  }, [_setThreadId]);
+
   // TODO: this should be part of the useStream hook
   const prevMessageLength = useRef(0);
   useEffect(() => {
@@ -323,6 +328,12 @@ export function Thread() {
     if ((text.trim().length === 0 && blocks.length === 0) || isLoading) return;
     setFirstTokenReceived(false);
 
+    let effectiveThreadId = threadId;
+    if (!effectiveThreadId) {
+      effectiveThreadId = uuidv4();
+      _setThreadId(effectiveThreadId);
+    }
+
     const newHumanMessage: Message = {
       id: uuidv4(),
       type: "human",
@@ -338,7 +349,11 @@ export function Thread() {
       Object.keys(artifactContext).length > 0 ? artifactContext : undefined;
 
     stream.submit(
-      { messages: [...toolMessages, newHumanMessage], context },
+      {
+        messages: [...toolMessages, newHumanMessage],
+        context,
+        threadId: effectiveThreadId,
+      },
       {
         optimisticValues: (prev) => ({
           ...prev,

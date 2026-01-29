@@ -16,7 +16,7 @@ import {
   type RemoveUIMessage,
 } from "@langchain/langgraph-sdk/react-ui";
 import { v4 as uuidv4 } from "uuid";
-import { toast } from "sonner";
+import { logChatMessage } from "@/app/api/chat/actions";
 
 export type StateType = { messages: Message[]; ui?: UIMessage[] };
 
@@ -27,6 +27,7 @@ const useTypedStream = useStream<
       messages?: Message[] | Message | string;
       ui?: (UIMessage | RemoveUIMessage)[] | UIMessage | RemoveUIMessage;
       context?: Record<string, unknown>;
+      threadId?: string;
     };
     CustomEventType: UIMessage | RemoveUIMessage;
   }
@@ -111,6 +112,8 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
           const newMessages = [...messages, ...addedMessages];
           setMessages(newMessages);
 
+          const sessionId = params?.threadId;
+
           try {
             // Map messages to the format expected by the API
             const apiMessages = newMessages
@@ -131,6 +134,29 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
                 return { role, content };
               })
               .filter((m) => m.content !== "" || m.role === "assistant"); // Keep assistant messages even if empty (streaming)
+
+            // Log the latest human message if we have a session ID
+            if (sessionId && addedMessages.length > 0) {
+              const lastHumanMessage = addedMessages.findLast(
+                (m: any) => m.type === "human",
+              );
+              if (lastHumanMessage) {
+                const content =
+                  typeof lastHumanMessage.content === "string"
+                    ? lastHumanMessage.content
+                    : (lastHumanMessage.content as any[]).find(
+                        (c) => c.type === "text",
+                      )?.text || "";
+
+                if (content) {
+                  logChatMessage(sessionId, "human", content, {
+                    language,
+                  }).catch((e) =>
+                    console.error("Failed to log human message:", e),
+                  );
+                }
+              }
+            }
 
             const response = await fetch("/api/chat", {
               method: "POST",
@@ -217,6 +243,16 @@ const StreamSession = ({ children }: { children: ReactNode }) => {
                     }
                   }
                 }
+              }
+            }
+
+            // Log AI message once streaming is complete
+            if (sessionId) {
+              const content = teamContent || fullContent;
+              if (content) {
+                logChatMessage(sessionId, "ai", content, { language }).catch(
+                  (e) => console.error("Failed to log AI message:", e),
+                );
               }
             }
           } catch (err: any) {

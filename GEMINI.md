@@ -29,6 +29,12 @@
   - `supabase/`: Supabase client and server configuration.
   - `utils.ts`: Common utilities including the `cn` helper for Tailwind.
 
+## GitHub Repository
+
+- **Owner:** `Legendary-Malaysia`
+- **Repository:** `legendary-app`
+- **Primary Branch:** `main`
+
 ## Building and Running
 
 ### Prerequisites
